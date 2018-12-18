@@ -1,0 +1,8 @@
+//
+// Created by Benjamin Gray on 16/12/18.
+//
+
+#ifndef LATEX_LANGUAGE_SERVER_TEXCOUNT_H
+#define LATEX_LANGUAGE_SERVER_TEXCOUNT_H
+
+#endif //LATEX_LANGUAGE_SERVER_TEXCOUNT_H

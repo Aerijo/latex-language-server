@@ -4,3 +4,15 @@
 [submodule "tree-sitter"]
 	path = tree-sitter
 	url = https://github.com/tree-sitter/tree-sitter
+[submodule "third_party/tree-sitter-latex"]
+	path = third_party/tree-sitter-latex
+	url = https://github.com/Aerijo/tree-sitter-latex
+[submodule "third_party/tree-sitter"]
+	path = third_party/tree-sitter
+	url = https://github.com/tree-sitter/tree-sitter
+[submodule "third_party/languageserver-tools"]
+	path = third_party/languageserver-tools
+	url = https://github.com/Aerijo/languageserver-tools
+[submodule "languageserver-tools"]
+	path = languageserver-tools
+	url = https://github.com/Aerijo/languageserver-tools

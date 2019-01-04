@@ -1,13 +1,25 @@
-cmake_minimum_required(VERSION 3.12)
-project(latex_language_server)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+project(latex_language_server LANGUAGES C CXX VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
+#set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-include_directories(src)
+include_directories(src, src/lsp-tools)
 
 add_executable(latex_language_server
         src/main.cpp
-        src/parser.cpp
-        src/parser.h src/texcount.cpp src/texcount.h src/options.cpp src/options.h src/communications.cpp src/message_handler.cpp src/message_handler.h src/message.cpp src/message.h src/TextDocument.cpp src/TextDocument.h)
+        src/lsp-tools/QueueManager.cpp
+        src/lsp-tools/ioThreads.cpp
+        src/lsp-tools/library.cpp
+        src/lsp-tools/position.cpp
+        src/lsp-tools/ThreadedQueue.cpp
+        third_party/tree-sitter/libruntime.a
+        third_party/tree-sitter/src/runtime.c)
 
-target_include_directories(latex_language_server PRIVATE third_party/rapidjson/include)
+target_include_directories(latex_language_server PRIVATE
+        third_party/rapidjson/include
+        third_party/tree-sitter/include
+        third_party/tree-sitter/src
+        third_party/tree-sitter/externals/utf8proc
+        third_party/tree-sitter-latex/src
+        )

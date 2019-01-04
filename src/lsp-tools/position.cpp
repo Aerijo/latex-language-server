@@ -62,7 +62,7 @@ void Point::traverse (const Point &delta) {
     traverse(delta.row, delta.column);
 }
 
-void Point::traverse (int down, int across) {
+void Point::traverse (f_index down, f_index across) {
     if (down == 0) {
         column += across;
     } else {

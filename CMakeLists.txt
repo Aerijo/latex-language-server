@@ -3,6 +3,8 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 add_executable(latex_language_server
         src/main.cpp
         src/lsp-tools/QueueManager.cpp

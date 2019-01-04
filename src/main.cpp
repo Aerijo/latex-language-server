@@ -2,10 +2,6 @@
 
 #include <tree_sitter/runtime.h>
 
-//extern "C" {
-//    TSParser *ts_parser_new();
-//}
-
 #include <QueueManager.h>
 #include <ioThreads.h>
 

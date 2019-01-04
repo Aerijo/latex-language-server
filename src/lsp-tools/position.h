@@ -34,9 +34,9 @@ struct Point {
     int compare (const Point &that) const;
 
     void translate (const Point &delta);
-    void translate (int down, int across);
+    void translate (f_index down, f_index across);
     void traverse (const Point &delta);
-    void traverse (int down, int across);
+    void traverse (f_index down, f_index across);
 
     string toString () const;
     string toExtendedString (const string &fileName) const;

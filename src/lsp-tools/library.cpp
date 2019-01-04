@@ -130,19 +130,16 @@ void cancelRequest (const string &id) {
  */
 Document getMessage () {
     size_t length = readHeaders();
-    char buffer[length];
+    char *buffer = new char[length];
 
     std::cerr << "Getting body::\n\n";
     for (size_t i = 0; i < length; i++) {
-        char c = getchar();
+        char c = static_cast<char>(getchar());
         std::cerr << c;
         buffer[i] = c;
     }
 
     std::cerr << "\n\n";
-
-//    FileReadStream input (stdin, buffer, sizeof(buffer));
-
     std::cerr << "Made filestream...\n";
 
     Document json;
@@ -153,6 +150,8 @@ Document getMessage () {
     }
 
     std::cerr << "Parsed stream; returning...\n";
+
+    delete[] buffer;
 
     return json;
 }

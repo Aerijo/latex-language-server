@@ -3,17 +3,17 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(src, src/lsp-tools)
-
 add_executable(latex_language_server
         src/main.cpp
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ioThreads.cpp
         src/lsp-tools/library.cpp
         src/lsp-tools/position.cpp
-        src/lsp-tools/ThreadedQueue.cpp
-        third_party/tree-sitter/libruntime.a
-        third_party/tree-sitter/src/runtime.c)
+        src/lsp-tools/ThreadedQueue.cpp)
+
+target_include_directories(latex_language_server PRIVATE
+        src,
+        src/lsp-tools)
 
 target_include_directories(latex_language_server PRIVATE
         third_party/rapidjson/include

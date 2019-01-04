@@ -42,6 +42,8 @@ struct FileEvent {
 
 class Id {
 public:
+    ~Id () = default;
+
     bool isIdString;
 
     union {
@@ -226,6 +228,8 @@ struct DeleteFile {
 };
 
 struct EditMessage {
+    ~EditMessage() = default;
+
     ResourceOperationKind type;
     union {
         struct TextDocumentEdit textEdit;

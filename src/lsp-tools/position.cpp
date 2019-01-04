@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "position.h"
 
 Point::Point() : row(-1), column(-1) {};

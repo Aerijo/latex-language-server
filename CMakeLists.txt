@@ -9,10 +9,11 @@ add_executable(latex_language_server
         src/lsp-tools/ioThreads.cpp
         src/lsp-tools/library.cpp
         src/lsp-tools/position.cpp
-        src/lsp-tools/ThreadedQueue.cpp)
+        src/lsp-tools/ThreadedQueue.cpp
+        third_party/tree-sitter/src/runtime/runtime.c)
 
 target_include_directories(latex_language_server PRIVATE
-        src,
+        src
         src/lsp-tools)
 
 target_include_directories(latex_language_server PRIVATE

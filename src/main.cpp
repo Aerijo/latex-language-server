@@ -2,12 +2,18 @@
 
 #include <tree_sitter/runtime.h>
 
+//extern "C" {
+//    TSParser *ts_parser_new();
+//}
+
 #include <QueueManager.h>
 #include <ioThreads.h>
 
 int main (int argc, char** argv, const char** env) {
 
     std::cout << "Running..." << std::endl;
+
+    TSParser *parser = ts_parser_new();
 
 
 //    QueueManager::init();

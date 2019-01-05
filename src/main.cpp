@@ -5,10 +5,13 @@
 #include <QueueManager.h>
 #include <ioThreads.h>
 
+extern "C" { TSLanguage *tree_sitter_latex(); }
+
 int main (int argc, char** argv, const char** env) {
 
     TSParser *parser = ts_parser_new();
 
+    ts_parser_set_language(parser, tree_sitter_latex());
 
     QueueManager::init();
 
@@ -32,7 +35,7 @@ int main (int argc, char** argv, const char** env) {
             std::cerr << "Message is null :( ...\n";
         }
 
-
+        // just echo it back
         QueueManager::writeStdout(message);
     }
 

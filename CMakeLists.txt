@@ -12,7 +12,10 @@ add_executable(latex_language_server
         src/lsp-tools/library.cpp
         src/lsp-tools/position.cpp
         src/lsp-tools/ThreadedQueue.cpp
-        third_party/tree-sitter/src/runtime/runtime.c)
+        third_party/tree-sitter/src/runtime/runtime.c
+        third_party/tree-sitter-latex/src/catcode.cc
+        third_party/tree-sitter-latex/src/scanner.cc
+        third_party/tree-sitter-latex/src/parser.c)
 
 target_include_directories(latex_language_server PRIVATE
         src

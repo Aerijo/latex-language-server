@@ -14,14 +14,18 @@ private:
     std::deque<T> priority_queue;
     std::deque<T> queue;
     std::condition_variable c;
-
     size_t size { 0 };
+
 public:
     bool empty () const { return size == 0; }
 
     void enqueue (T &&elem, bool priority = false) {
         std::cerr << "enqueuing message...\n";
-//        sendMessage(elem);
+
+        if (elem.IsNull()) {
+            std::cerr << "message going in null :(...\n";
+        }
+
         {
             std::lock_guard<std::mutex> lock(mutex);
             if (priority) {

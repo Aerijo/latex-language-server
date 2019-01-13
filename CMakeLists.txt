@@ -15,7 +15,7 @@ add_executable(latex_language_server
         third_party/tree-sitter/src/runtime/runtime.c
         third_party/tree-sitter-latex/src/catcode.cc
         third_party/tree-sitter-latex/src/scanner.cc
-        third_party/tree-sitter-latex/src/parser.c src/Handler.h src/Handler.cpp src/Handler.cpp src/handlers/initialize.cpp src/lsp-tools/definitions.h)
+        third_party/tree-sitter-latex/src/parser.c src/Handler.h src/Handler.cpp src/Handler.cpp src/handlers/initialize.cpp src/lsp-tools/definitions.h src/lsp-tools/MessageHandler.cpp src/lsp-tools/MessageHandler.h)
 
 target_include_directories(latex_language_server PRIVATE
         src

@@ -3,7 +3,7 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall")
 
 add_executable(latex_language_server
         src/main.cpp
@@ -15,7 +15,7 @@ add_executable(latex_language_server
         third_party/tree-sitter/src/runtime/runtime.c
         third_party/tree-sitter-latex/src/catcode.cc
         third_party/tree-sitter-latex/src/scanner.cc
-        third_party/tree-sitter-latex/src/parser.c)
+        third_party/tree-sitter-latex/src/parser.c src/Handler.h src/Handler.cpp src/Handler.cpp src/handlers/initialize.cpp src/lsp-tools/definitions.h)
 
 target_include_directories(latex_language_server PRIVATE
         src
@@ -26,5 +26,4 @@ target_include_directories(latex_language_server PRIVATE
         third_party/tree-sitter/include
         third_party/tree-sitter/src
         third_party/tree-sitter/externals/utf8proc
-        third_party/tree-sitter-latex/src
-        )
+        third_party/tree-sitter-latex/src)

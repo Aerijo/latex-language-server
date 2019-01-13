@@ -20,7 +20,6 @@ public:
     bool empty () const { return size == 0; }
 
     void enqueue (T &&elem, bool priority = false) {
-        std::cerr << "enqueuing message...\n";
 
         if (elem.IsNull()) {
             std::cerr << "message going in null :(...\n";
@@ -54,10 +53,6 @@ public:
             priority_queue.pop_front();
         }
         size--;
-
-        std::cerr << "dequeuing message...\n";
-
-//        sendMessage(elem);
 
         return std::move(elem);
     }

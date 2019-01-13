@@ -19,17 +19,11 @@ int main (int argc, char** argv, const char** env) {
 
     launchStdinLoop();
 
-    std::cerr << "set up input loop...\n";
-
     launchStdoutLoop();
-
-    std::cerr << "Running main loop...\n";
 
     auto *queue = QueueManager::getInstance();
     while (true) {
         Document message = queue->for_handlers.dequeue();
-
-        std::cerr << "Handling message...\n";
 
         if (message.IsNull()) {
             std::cerr << "Message is null :( ...\n";

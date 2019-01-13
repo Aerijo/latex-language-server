@@ -8,6 +8,13 @@ void handleFailedJSON () {
 
 }
 
+/**
+ * Check:
+ * - If method starts with `$/`, it must be a notification (request throws error MethodNotFound)
+ * - Has `jsonrpc: 2.0`
+ * - Has `method`
+ * -
+ */
 void verifyJSON (const Document &json) {
     if (json.HasParseError()) return handleFailedJSON();
 
@@ -88,38 +95,33 @@ size_t readHeaders () {
     }
 }
 
-
-bool validateMessage (Document &message) {
-    /**
-     * Check:
-     * - If method starts with `$/`, it must be a notification (request throws error MethodNotFound)
-     * - Has `jsonrpc: 2.0`
-     * - Has `method`
-     * -
-     */
-
-    return true;
-}
-
 // NOTE: Still need to respond
 void cancelRequest (int id) {
-    Document message;
-    auto &allocator = message.GetAllocator();
+    StringBuffer buffer;
+    Writer<StringBuffer> writer (buffer);
 
-    message.AddMember("method", "$/cancelRequest", allocator);
-    message.AddMember("params", Value().SetObject().AddMember("id", id, allocator), allocator);
+    writer.StartObject();
+        writer.Key("method"); writer.String("$/cancelRequest");
+        writer.Key("params"); writer.StartObject();
+            writer.Key("id"); writer.Int(id);
+        writer.EndObject();
+    writer.EndObject();
 
-    sendMessage(message);
+//    sendMessage(buffer);
 }
 
 void cancelRequest (const string &id) {
-    Document message;
-//    auto &allocator = message.GetAllocator();
+    StringBuffer buffer;
+    Writer<StringBuffer> writer (buffer);
 
-//    message.AddMember("method", "$/cancelRequest", allocator);
-//    message.AddMember("params", Value().SetObject().AddMember("id", id, allocator), allocator);
+    writer.StartObject();
+        writer.Key("method"); writer.String("$/cancelRequest");
+        writer.Key("params"); writer.StartObject();
+            writer.Key("id"); writer.String(id.c_str());
+        writer.EndObject();
+    writer.EndObject();
 
-    sendMessage(message);
+//    sendMessage(buffer);
 }
 
 /**
@@ -131,19 +133,13 @@ void cancelRequest (const string &id) {
 Document getMessage () {
     size_t length = readHeaders();
 
-    std::cerr << "Length is " << length << "\n";
-
     string buffer;
 
-    std::cerr << "Getting body::\n\n";
     for (size_t i = 0; i < length; i++) {
         char c = static_cast<char>(getchar());
         std::cerr << c;
         buffer += c;
     }
-
-    std::cerr << "\n\n";
-    std::cerr << "Made filestream...\n";
 
     Document json;
     json.Parse(buffer.c_str());
@@ -156,102 +152,9 @@ Document getMessage () {
         std::cerr << "Error code: " << error << "\n";
     }
 
-    std::cerr << "Parsed stream; returning...\n";
-
     return json;
 }
 
-void sendResponse (Value &result) {
-    Document json;
-    auto &allocator = json.GetAllocator();
+void awaitInitialization () {
 
-    json.AddMember("id", Value(), allocator);
-    json.AddMember("result", result, allocator);
-
-    sendMessage(json);
-}
-
-void sendResponse (const string &id, Value &result) {
-    Document json;
-//    auto &allocator = json.GetAllocator();
-//
-//    json.AddMember("id", id, allocator);
-//    json.AddMember("result", result, allocator);
-
-    sendMessage(json);
-}
-
-void sendResponse (const int id, Value &result) {
-    Document json;
-    auto &allocator = json.GetAllocator();
-
-    json.AddMember("id", id, allocator);
-    json.AddMember("result", result, allocator);
-
-    sendMessage(json);
-}
-
-void sendError (int code, const string &message) {
-    Document json;
-//    auto &allocator = json.GetAllocator();
-//
-//    json.AddMember("code", code, allocator);
-//    json.AddMember("message", message, allocator);
-
-    sendMessage(json);
-}
-
-void sendRequest (const int id, const string &method, Value &params) {
-    Document json;
-//    auto &allocator = json.GetAllocator();
-//
-//    json.AddMember("id", id, allocator);
-//    json.AddMember("method", method, allocator);
-//    json.AddMember("params", params, allocator);
-
-    sendMessage(json);
-}
-
-void sendNotification (const string &method, Value &params) {
-    Document json;
-//    auto &allocator = json.GetAllocator();
-//
-//    json.AddMember("method", method, allocator);
-//    json.AddMember("params", params, allocator);
-
-    sendMessage(json);
-}
-
-//void sendMessage (Document &message) {
-//    message.AddMember("jsonrpc", "2.0", message.GetAllocator());
-//
-//    StringBuffer buffer;
-//    Writer<StringBuffer> writer (buffer);
-//    message.Accept(writer);
-//
-//    std::cout
-//            << "Content-Length: "
-//            << buffer.GetLength()
-//            << "\r\n\r\n"
-//            << buffer.GetString();
-//    std::cout.flush();
-//}
-
-void awaitInitializeRequest () {
-
-}
-
-void handleMessage (Document &message) {
-
-}
-
-void startServerListening () {
-    awaitInitializeRequest();
-
-    while (true) {
-        Document message = getMessage();
-        handleMessage(message);
-
-        if (message == "foo") break;
-    }
 }

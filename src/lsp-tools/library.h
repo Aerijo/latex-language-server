@@ -40,34 +40,6 @@ struct FileEvent {
     FileChangeType type;
 };
 
-class Id {
-public:
-    ~Id () = default;
-
-    bool isIdString;
-
-    union {
-        string stringId;
-        int intId;
-    } id;
-
-    bool isString () {
-        return this->isIdString;
-    };
-
-    bool isInt () {
-        return !this->isIdString;
-    }
-
-    int getIntID () {
-        return this->id.intId;
-    }
-
-    string getStringId () {
-        return this->id.stringId;
-    }
-};
-
 enum class LSP_ERROR {
     // JSON RPC
     ParseError = -32700,
@@ -559,24 +531,12 @@ struct ConfigurationItem {
 
 Document getMessage ();
 
-void sendResponse (Value &result);
-
-void sendResponse (const string &id, Value &result);
-
-void sendResponse (int id, Value &result);
-
-void sendError (LSP_ERROR code, const string &message);
-
-void sendRequest (int id, const string &method, Value &params);
-
-void sendNotification (const string &method, Value &params);
-
 void cancelRequest (int id);
 
 void cancelRequest (const string &id);
 
 void sendMessage (Document &message);
 
-void startServerListening ();
+void awaitInitialization ();
 
 #endif

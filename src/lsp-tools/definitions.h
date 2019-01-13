@@ -15,7 +15,7 @@ enum class IdType {
     String
 };
 
-struct Id {
+class Id {
     IdType type;
     union {
         string stringId;
@@ -32,6 +32,21 @@ struct Id {
                 break;
         }
     }
+
+    bool operator == (Id &that) {
+        return type != that.type
+            ? false
+            : type == IdType::Number
+                ? numberId == that.numberId
+                : stringId == that.stringId;
+    }
+};
+
+enum class MessageType {
+    Request,
+    Response,
+    Notification,
+    Unknown
 };
 
 #endif //LATEX_LANGUAGE_SERVER_DEFINITIONS_H

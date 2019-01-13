@@ -72,13 +72,6 @@ enum class FailureHandlingKind {
     TextOnlyTransactional
 };
 
-enum class MessageType {
-    Error = 1,
-    Warning = 2,
-    Info = 3,
-    Log = 4
-};
-
 enum class DiagnosticSeverity {
     ERROR = 1,
     WARNING = 2,

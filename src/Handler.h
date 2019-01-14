@@ -11,6 +11,7 @@
 
 using std::string;
 using std::optional;
+using std::unordered_map;
 
 using namespace rapidjson;
 
@@ -32,11 +33,11 @@ using namespace rapidjson;
 
 class Handler {
 public:
-    std::string method;
+    string method;
 };
 
 class RequestHandler : Handler {
-    virtual void run (Id id, optional<Value> &params) = 0;
+    virtual void run (Id &id, optional<Value> &params) = 0;
 };
 
 class NotificationHandler : Handler {
@@ -44,26 +45,24 @@ class NotificationHandler : Handler {
 };
 
 class ResponseHandler : Handler {
-    virtual void run (optional<Value> &result, optional<Value> &error) = 0;
+    virtual void run (Id &id, optional<Value> &result, optional<Value> &error) = 0;
 };
 
 class HandlerManager {
 private:
     static HandlerManager *instance;
-    std::unordered_map<std::string, Handler*> handlers;
+
+    unordered_map<string, RequestHandler *> requestHandlers;
+    unordered_map<IdNumberType, ResponseHandler *> numberResponseHandlers;
+    unordered_map<string, ResponseHandler *> stringResponseHandlers;
+    unordered_map<string, NotificationHandler *> notificationHandlers;
 
 public:
     static HandlerManager *getInstance ();
 
-    void registerHandler (Handler &handler);
-
-    std::optional<Handler*> getHandlerForMethod (const std::string &method);
-
-    void executeHandlerForMessage (Document &message);
-
-    void onMissingMethod (Document &message);
-
-    void onUnhandledMethod (Document &message);
+    optional<RequestHandler *> getRequestHandler (const string &method);
+    optional<ResponseHandler *> getResponseHandler (const Id &id);
+    optional<NotificationHandler *> getNotificationHandler (const string &method);
 };
 
 #endif //LATEX_LANGUAGE_SERVER_HANDLER_H

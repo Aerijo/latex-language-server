@@ -15,7 +15,17 @@ enum class IdType {
     String
 };
 
-class Id {
+struct Id {
+    Id (IdNumberType val) {
+        type = IdType::Number;
+        numberId = val;
+    }
+
+    Id (const string &val) {
+        type = IdType::String;
+        stringId = val;
+    }
+
     IdType type;
     union {
         string stringId;

@@ -3,7 +3,7 @@
 #include "QueueManager.h"
 #include "definitions.h"
 
-void MessageHandler::init() {
+void MessageHandler::init () {
     launchStdinLoop();
 
     launchStdoutLoop();
@@ -37,7 +37,7 @@ MessageType getMessageType (Document &message) {
     return MessageType::Unknown;
 }
 
-void MessageHandler::run() {
+void MessageHandler::run () {
     auto *queue = QueueManager::getInstance();
     while (true) {
         Document message = queue->for_handlers.dequeue();
@@ -62,4 +62,20 @@ void MessageHandler::run() {
                 break;
         }
     }
+}
+
+void MessageHandler::handleRequest (Document &message) {
+
+}
+
+void MessageHandler::handleResponse (Document &message) {
+
+}
+
+void MessageHandler::handleNotification (Document &message) {
+
+}
+
+void MessageHandler::handleUnknown (Document &message) {
+
 }

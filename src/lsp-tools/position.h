@@ -26,7 +26,7 @@ struct Point {
     f_index row;
     f_index column;
 
-    Point ();
+    Point () = delete;
     Point (f_index row, f_index column);
 
     bool hasValue () const;
@@ -51,7 +51,7 @@ struct Range {
     Point start;
     Point end;
 
-    Range ();
+    Range () = delete;
     explicit Range (Point point);
     Range (Point start, Point end);
 

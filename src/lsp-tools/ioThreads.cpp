@@ -1,29 +1,13 @@
 #include <iostream>
 #include <thread>
 #include <string>
+#include <vector>
 
 #include <rapidjson/document.h>
 
+#include "cannedResponses.h"
+#include "ioThreads.h"
 #include "QueueManager.h"
-#include "library.h"
-
-void launchStdinLoop () {
-    std::cin.tie(nullptr);
-
-    std::thread([=]{
-        awaitInitialization();
-
-        while (true) {
-            Document message = getMessage();
-
-            if (message.IsNull()) {
-                std::cerr << "!!!Input message was null...\n";
-            }
-
-            QueueManager::pushMessage(message);
-       }
-    }).detach();
-}
 
 void sendMessage (Document &message) {
     if (!message.HasMember("jsonrpc")) {
@@ -31,14 +15,61 @@ void sendMessage (Document &message) {
     }
 
     StringBuffer buffer;
+
     Writer<StringBuffer> writer (buffer);
     message.Accept(writer);
 
+    sendMessage(buffer);
+}
+
+void sendMessage (StringBuffer &buffer) {
     std::cout
             << "Content-Length: " << buffer.GetLength()
             << "\r\n\r\n"
             << buffer.GetString();
     std::cout.flush();
+}
+
+optional<const char *> getString (Document &message, const char *key) {
+    auto itr = message.FindMember(key);
+    if (itr == message.MemberEnd()) {
+        return {};
+    }
+
+    return { itr->value.GetString() };
+}
+
+void launchStdinLoop () {
+    std::cin.tie(nullptr);
+
+    std::thread([=]{
+        while (true) {
+            Document message = getMessage();
+
+            optional<const char *> method = getString(message, "method");
+
+            if (!method.value()) {
+                sendError(nullptr, ResponseHandler::ErrorCode::InvalidRequest, "Was not expecting a response");
+                continue;
+            }
+
+            if (std::strcmp(method.value(), "initialize") == 0) {
+                QueueManager::pushMessage(message);
+                break;
+            } else if (std::strcmp(method.value(), "exit") == 0) {
+                std::cerr << "!!! Received exit notification !!! exiting\n";
+                exit(0);
+            } else {
+                sendError(nullptr, ResponseHandler::ErrorCode::MethodNotFound, "Awaiting initialize request");
+            }
+        }
+
+        while (true) {
+            Document message = getMessage();
+
+            QueueManager::pushMessage(message);
+       }
+    }).detach();
 }
 
 void launchStdoutLoop () {

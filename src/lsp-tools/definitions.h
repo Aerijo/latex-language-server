@@ -10,26 +10,18 @@ using std::string;
 
 using namespace::rapidjson;
 
-enum class IdType {
-    Number,
-    String
-};
-
 struct Id {
-    Id (IdNumberType val) {
-        type = IdType::Number;
-        numberId = val;
-    }
+    Id () = delete; // disallow "blank" Id objects; if it exists, it must be tied to a message
 
-    Id (const string &val) {
-        type = IdType::String;
-        stringId = val;
-    }
+    explicit Id (IdNumberType val) : type (IdType::Number), numberId (val) {}
 
-    IdType type;
+    explicit Id (const char *val) : type (IdType::String), stringId (val) {};
+
+    enum class IdType { String, Number } type;
+
     union {
-        string stringId;
         IdNumberType numberId;
+        const char *stringId;
     };
 
     void writeId (Writer<StringBuffer> &writer) {
@@ -38,7 +30,7 @@ struct Id {
                 writer.Int64(numberId);
                 break;
             case IdType::String:
-                writer.String(stringId.c_str());
+                writer.String(stringId);
                 break;
         }
     }
@@ -48,7 +40,7 @@ struct Id {
             ? false
             : type == IdType::Number
                 ? numberId == that.numberId
-                : stringId == that.stringId;
+                : *stringId == *that.stringId;
     }
 };
 

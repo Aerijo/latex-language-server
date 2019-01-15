@@ -2,8 +2,11 @@
 #include "ioThreads.h"
 #include "QueueManager.h"
 #include "definitions.h"
+#include "cannedResponses.h"
 
 void MessageHandler::init () {
+    handlers = HandlerManager::getInstance();
+
     launchStdinLoop();
 
     launchStdoutLoop();
@@ -47,6 +50,8 @@ void MessageHandler::run () {
             continue;
         }
 
+
+
         switch (getMessageType(message)) {
             case MessageType::Request:
                 handleRequest(message);
@@ -64,8 +69,49 @@ void MessageHandler::run () {
     }
 }
 
-void MessageHandler::handleRequest (Document &message) {
+optional<Value> getObject (Document &value, const string &key) {
+    auto itr = value.FindMember(key.c_str());
+    if (itr == value.MemberEnd() || itr->value.IsNull()) {
+        return {};
+    }
+    return { itr->value.GetObject() };
+}
 
+optional<string> getString (Document &value, const string &key) {
+    auto itr = value.FindMember(key.c_str());
+    if (itr == value.MemberEnd() || itr->value.IsNull()) {
+        return {};
+    }
+    return { itr->value.GetString() };
+}
+
+Id getId (Document &value) {
+    auto itr = value.FindMember("id");
+
+    // we assume it exists
+    if (itr->value.IsNumber()) {
+        return Id { itr->value.GetInt64() };
+    } else {
+        return Id { itr->value.GetString() };
+    }
+}
+
+void MessageHandler::handleRequest (Document &message) {
+    const char *method = message["method"].GetString();
+
+    Id id = getId(message);
+
+    optional<Value> params = getObject(message, "params");
+
+    optional<RequestHandler *> handler = handlers->getRequestHandler(method);
+
+    if (handler.has_value()) {
+        handler.value()->run(id, params);
+    } else {
+        std::cerr << "Unhandled request " << method << "\n";
+
+        sendError(&id, ResponseHandler::ErrorCode::MethodNotFound, "No handler for request: " + string(method));
+    }
 }
 
 void MessageHandler::handleResponse (Document &message) {
@@ -78,4 +124,13 @@ void MessageHandler::handleNotification (Document &message) {
 
 void MessageHandler::handleUnknown (Document &message) {
 
+}
+
+
+void MessageHandler::registerHandler (RequestHandler *handler) {
+    handlers->registerHandler(handler);
+}
+
+void MessageHandler::registerHandler (NotificationHandler *handler) {
+    handlers->registerHandler(handler);
 }

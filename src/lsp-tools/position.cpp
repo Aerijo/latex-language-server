@@ -2,8 +2,6 @@
 
 #include "position.h"
 
-Point::Point() : row(-1), column(-1) {};
-
 Point::Point (f_index row, f_index column) : row(row), column(column) {}
 
 bool Point::hasValue () const {
@@ -70,8 +68,6 @@ void Point::traverse (f_index down, f_index across) {
         column = across;
     }
 }
-
-Range::Range () : Range(Point()) {}
 
 Range::Range (Point point) : Range(point, point) {}
 

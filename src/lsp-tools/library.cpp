@@ -4,26 +4,6 @@
 
 #define STDIN_EXPECT(e) if (getchar() != e) { gotoNextHeader(); continue; };
 
-void handleFailedJSON () {
-
-}
-
-/**
- * Check:
- * - If method starts with `$/`, it must be a notification (request throws error MethodNotFound)
- * - Has `jsonrpc: 2.0`
- * - Has `method`
- * -
- */
-void verifyJSON (const Document &json) {
-    if (json.HasParseError()) return handleFailedJSON();
-
-    Value::ConstMemberIterator version = json.FindMember("jsonrpc");
-    if (version == json.MemberEnd() || std::string(version->value.GetString()) != "2.0") {
-        handleFailedJSON();
-    }
-}
-
 void gotoNextHeader () {
     std::cerr << "Failed header...\n";
     while (true) {
@@ -95,35 +75,6 @@ size_t readHeaders () {
     }
 }
 
-// NOTE: Still need to respond
-void cancelRequest (int id) {
-    StringBuffer buffer;
-    Writer<StringBuffer> writer (buffer);
-
-    writer.StartObject();
-        writer.Key("method"); writer.String("$/cancelRequest");
-        writer.Key("params"); writer.StartObject();
-            writer.Key("id"); writer.Int(id);
-        writer.EndObject();
-    writer.EndObject();
-
-//    sendMessage(buffer);
-}
-
-void cancelRequest (const string &id) {
-    StringBuffer buffer;
-    Writer<StringBuffer> writer (buffer);
-
-    writer.StartObject();
-        writer.Key("method"); writer.String("$/cancelRequest");
-        writer.Key("params"); writer.StartObject();
-            writer.Key("id"); writer.String(id.c_str());
-        writer.EndObject();
-    writer.EndObject();
-
-//    sendMessage(buffer);
-}
-
 /**
  * Extracts and returns the raw JSON from a message. Also verifies the
  * jsonrpc property is valid.
@@ -153,8 +104,4 @@ Document getMessage () {
     }
 
     return json;
-}
-
-void awaitInitialization () {
-
 }

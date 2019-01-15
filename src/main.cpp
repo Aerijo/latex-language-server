@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <tree_sitter/runtime.h>
+#include "config.h"
 
 #include <QueueManager.h>
 #include <ioThreads.h>
@@ -10,8 +11,11 @@
 
 extern "C" { TSLanguage *tree_sitter_latex(); }
 
+Config *g_config;
+
 int main (int argc, char** argv, const char** env) {
 
+    g_config = new Config();
 
     TSParser *parser = ts_parser_new();
 

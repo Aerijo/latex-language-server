@@ -22,7 +22,7 @@ add_executable(latex_language_server
         src/lsp-tools/MessageHandler.cpp
         src/lsp-tools/MessageHandler.h
         src/lsp-tools/handlerRegistration.h
-        src/handlers/initialize.h src/lsp-tools/messaging.h src/lsp-tools/messaging.cpp)
+        src/handlers/initialize.h src/lsp-tools/messaging.h src/lsp-tools/messaging.cpp src/config.h)
 
 target_include_directories(latex_language_server PRIVATE
         src

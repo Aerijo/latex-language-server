@@ -1,5 +1,4 @@
 #include "QueueManager.h"
-#include "library.h"
 
 QueueManager* QueueManager::instance;
 

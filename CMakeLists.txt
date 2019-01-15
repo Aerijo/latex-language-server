@@ -9,7 +9,6 @@ add_executable(latex_language_server
         src/main.cpp
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ioThreads.cpp
-        src/lsp-tools/library.cpp
         src/lsp-tools/position.cpp
         src/lsp-tools/ThreadedQueue.cpp
         third_party/tree-sitter/src/runtime/runtime.c
@@ -23,7 +22,7 @@ add_executable(latex_language_server
         src/lsp-tools/MessageHandler.cpp
         src/lsp-tools/MessageHandler.h
         src/lsp-tools/handlerRegistration.h
-        src/handlers/initialize.h src/lsp-tools/cannedResponses.h)
+        src/handlers/initialize.h src/lsp-tools/messaging.h src/lsp-tools/messaging.cpp)
 
 target_include_directories(latex_language_server PRIVATE
         src

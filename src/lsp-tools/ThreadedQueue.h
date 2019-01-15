@@ -5,7 +5,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <iostream>
-#include "library.h"
 
 template <class T>
 class ThreadedQueue {

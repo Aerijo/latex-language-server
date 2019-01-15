@@ -1,6 +1,71 @@
-#include <iostream>
+#include "messaging.h"
 
-#include "library.h"
+#define INIT_WRITER StringBuffer buffer; Writer<StringBuffer> writer (buffer);
+#define SEND_MESSAGE sendMessage(buffer);
+
+void sendMessage (StringBuffer &buffer) {
+    std::cout
+            << "Content-Length: " << buffer.GetLength()
+            << "\r\n\r\n"
+            << buffer.GetString();
+    std::cout.flush();
+}
+
+void sendMessage (Document &message) {
+    if (!message.HasMember("jsonrpc")) {
+        message.AddMember("jsonrpc", "2.0", message.GetAllocator());
+    }
+
+    StringBuffer buffer;
+
+    Writer<StringBuffer> writer (buffer);
+    message.Accept(writer);
+
+    sendMessage(buffer);
+}
+
+void cancelRequest (Id &id) {
+    INIT_WRITER
+
+    writer.StartObject();
+    writer.Key("method"); writer.String("$/cancelRequest");
+    writer.Key("params"); writer.StartObject();
+    writer.Key("id"); id.writeId(writer);
+    writer.EndObject();
+    writer.EndObject();
+
+    SEND_MESSAGE
+}
+
+void sendError (Id *id, ResponseHandler::ErrorCode code, const string message, Value *data) {
+    const char *c_message = message.c_str();
+    sendError(id, code, c_message, data);
+}
+
+void sendError (Id *id, ResponseHandler::ErrorCode code, const char *message, Value *data) {
+    INIT_WRITER
+
+    writer.StartObject();
+    writer.Key("id");
+    if (id == nullptr)
+        writer.Null();
+    else
+        id->writeId(writer);
+
+    writer.Key("error"); writer.StartObject();
+    writer.Key("code"); writer.Int64(code);
+    writer.Key("message"); writer.String(message);
+
+    if (data != nullptr) {
+        writer.Key("data"); data->Accept(writer);
+    }
+
+    writer.EndObject();
+    writer.EndObject();
+
+    SEND_MESSAGE
+}
+
 
 #define STDIN_EXPECT(e) if (getchar() != e) { gotoNextHeader(); continue; };
 
@@ -75,12 +140,6 @@ size_t readHeaders () {
     }
 }
 
-/**
- * Extracts and returns the raw JSON from a message. Also verifies the
- * jsonrpc property is valid.
- *
- * @return The JSON message
- */
 Document getMessage () {
     size_t length = readHeaders();
 

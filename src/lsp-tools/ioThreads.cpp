@@ -5,30 +5,8 @@
 
 #include <rapidjson/document.h>
 
-#include "cannedResponses.h"
 #include "ioThreads.h"
-#include "QueueManager.h"
 
-void sendMessage (Document &message) {
-    if (!message.HasMember("jsonrpc")) {
-        message.AddMember("jsonrpc", "2.0", message.GetAllocator());
-    }
-
-    StringBuffer buffer;
-
-    Writer<StringBuffer> writer (buffer);
-    message.Accept(writer);
-
-    sendMessage(buffer);
-}
-
-void sendMessage (StringBuffer &buffer) {
-    std::cout
-            << "Content-Length: " << buffer.GetLength()
-            << "\r\n\r\n"
-            << buffer.GetString();
-    std::cout.flush();
-}
 
 optional<const char *> getString (Document &message, const char *key) {
     auto itr = message.FindMember(key);

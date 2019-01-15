@@ -8,13 +8,11 @@
 
 #include "definitions.h"
 
+#include "messaging.h"
+#include "QueueManager.h"
+#include "Handler.h"
+
 using namespace rapidjson;
-
-void cancelRequest (Id &id);
-
-void sendMessage (Document &message);
-
-void sendMessage (StringBuffer &buffer);
 
 void launchStdinLoop ();
 

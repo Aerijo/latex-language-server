@@ -2,7 +2,7 @@
 #include "ioThreads.h"
 #include "QueueManager.h"
 #include "definitions.h"
-#include "cannedResponses.h"
+#include "messaging.h"
 
 void MessageHandler::init () {
     handlers = HandlerManager::getInstance();

@@ -7,6 +7,8 @@
 
 #include <rapidjson/document.h>
 
+#include "definitions.h"
+
 using std::optional;
 using std::string;
 using std::vector;
@@ -50,11 +52,6 @@ namespace Config {
         bool dynamicRegistration { false };
     };
 
-// TODO
-    struct SymbolKind {
-
-    };
-
     struct Symbol {
         bool dynamicRegistration { false };
 
@@ -93,11 +90,6 @@ namespace Config {
         bool didSave { false };
     };
 
-// TODO
-    enum MarkupKind {
-
-    };
-
     struct CompletionItem {
         bool snippetSupport { false };
 
@@ -108,11 +100,6 @@ namespace Config {
         bool deprecatedSupport { false };
 
         bool preselectSupport { false };
-    };
-
-// TODO
-    enum CompletionItemKind {
-
     };
 
     struct Completion {
@@ -197,11 +184,6 @@ namespace Config {
         bool dynamicRegistration { false };
 
         bool linkSupport { false };
-    };
-
-// TODO
-    enum CodeActionKind {
-
     };
 
     struct CodeActionLiteralSupport {

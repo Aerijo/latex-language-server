@@ -142,7 +142,6 @@ Document getMessage () {
 
     for (size_t i = 0; i < length; i++) {
         char c = static_cast<char>(getchar());
-        std::cerr << c;
         buffer += c;
     }
 

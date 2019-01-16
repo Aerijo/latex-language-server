@@ -11,11 +11,11 @@
 
 extern "C" { TSLanguage *tree_sitter_latex(); }
 
-Config *g_config;
+GlobalConfig *g_config;
 
 int main (int argc, char** argv, const char** env) {
 
-    g_config = new Config();
+    g_config = new GlobalConfig();
 
     TSParser *parser = ts_parser_new();
 

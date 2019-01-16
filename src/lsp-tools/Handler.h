@@ -34,10 +34,13 @@ public:
         Notification
     };
 
+    void registerCapabilities (Init::ServerCapabilities &capabilities) {};
+
 protected:
     explicit Handler (Handler::Type type) : type (type) {}
 
     Handler::Type type;
+
 };
 
 class RequestHandler : public Handler {

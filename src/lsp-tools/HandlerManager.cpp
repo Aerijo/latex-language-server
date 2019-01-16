@@ -50,3 +50,13 @@ void HandlerManager::registerHandler (RequestHandler *handler) {
 void HandlerManager::registerHandler (NotificationHandler *handler) {
     notificationHandlers.push_back(handler);
 }
+
+void HandlerManager::registerCapabilities (Init::ServerCapabilities &capabilities) {
+    for (RequestHandler *handler : requestHandlers) {
+        handler->registerCapabilities(capabilities);
+    }
+
+    for (NotificationHandler *handler : notificationHandlers) {
+        handler->registerCapabilities(capabilities);
+    }
+}

@@ -17,6 +17,16 @@ int main (int argc, char** argv, const char** env) {
 
 //    std::cerr << sizeof(Value) << std::endl;
 
+//    StringBuffer buffer;
+//
+//    StringWriter writer (buffer);
+//
+//    Init::ServerCapabilities foo {};
+//
+//    foo.codeActionProvider = Init::CodeActionOptions {};
+//
+//    foo.reflect(writer);
+
     TSParser *parser = ts_parser_new();
 
     ts_parser_set_language(parser, tree_sitter_latex());

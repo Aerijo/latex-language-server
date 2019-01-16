@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <vector>
+#include <handlers/initialize.h>
 
 #include "definitions.h"
 #include "Handler.h"
@@ -30,6 +31,8 @@ public:
 
     void registerHandler (RequestHandler *handler);
     void registerHandler (NotificationHandler *handler);
+
+    void registerCapabilities (Init::ServerCapabilities &capabilities);
 };
 
 #endif //LATEX_LANGUAGE_SERVER_HANDLERMANAGER_H

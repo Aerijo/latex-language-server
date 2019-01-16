@@ -1,7 +1,8 @@
 #include <iostream>
 
-#include "initialize.h"
 #include "definitions.h"
+#include "initialize.h"
+#include "HandlerManager.h"
 #include "messaging.h"
 
 namespace Init {
@@ -21,9 +22,7 @@ namespace Init {
 
     void reflectObject (Writer<StringBuffer> &writer, const string &name, Reflectable &value) {
         writer.Key(name);
-        writer.StartObject();
         value.reflect(writer);
-        writer.EndObject();
     }
 
     void reflectString (Writer<StringBuffer> &writer, const string &name, string &value, bool skipIfEmpty) {
@@ -46,6 +45,9 @@ namespace Init {
     }
 }
 
+void registerAllHandlerCapabilities (Init::ServerCapabilities &capabilities) {
+    HandlerManager::getInstance()->registerCapabilities(capabilities);
+}
 
 void InitializeHandler::run (Id &id, optional<Value> &params) {
     std::cerr << "handling initialisation request...\n";
@@ -58,10 +60,11 @@ void InitializeHandler::run (Id &id, optional<Value> &params) {
 
     writer.Key("capabilities");
 
-    Init::ServerCapabilities foo {};
+    Init::ServerCapabilities capabilities {};
 
-    foo.reflect(writer);
+    registerAllHandlerCapabilities(capabilities);
 
+    capabilities.reflect(writer);
 
     writer.EndObject();
 

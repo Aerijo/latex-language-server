@@ -147,7 +147,7 @@ Document getMessage () {
     }
 
     Document json;
-    json.Parse(buffer.c_str());
+    json.Parse(buffer);
 
     if (json.HasParseError()) {
         std::cerr << "!!!Error parsing JSON\n";

@@ -1,11 +1,18 @@
 #ifndef LATEX_LANGUAGE_SERVER_DEFINITIONS_H
 #define LATEX_LANGUAGE_SERVER_DEFINITIONS_H
 
+#include <optional>
 #include <string>
+#include <vector>
+
+#include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 
+using std::optional;
 using std::string;
+using std::vector;
 
+using rapidjson::Value;
 using rapidjson::Writer;
 using rapidjson::StringBuffer;
 
@@ -133,5 +140,305 @@ enum class SymbolKind {
     Operator = 25,
     TypeParameter = 26
 };
+
+namespace Init {
+
+    struct Reflectable {
+        virtual void reflect (StringWriter &writer) = 0;
+
+        virtual ~Reflectable () {};
+    };
+
+    template<typename T>
+    void reflectVector (StringWriter &writer, const string &name, vector<T> &list, bool skipIfEmpty = true) {
+        if (skipIfEmpty && list.empty()) return;
+
+        writer.Key(name);
+        writer.StartArray();
+        for (T &elem : list) {
+            elem.reflect(writer);
+        }
+        writer.EndArray();
+    };
+
+    template<>
+    void reflectVector<string> (StringWriter &writer, const string &name, vector<string> &list, bool skipIfEmpty);
+
+    void reflectBool (StringWriter &writer, const string &name, bool value, bool skipIfFalse = true);
+
+    void reflectInt (StringWriter &writer, const string &name, int value, bool skipIfNegative = true);
+
+    void reflectObject (StringWriter &writer, const string &name, Reflectable &value);
+
+    void reflectString (StringWriter &writer, const string &name, string &value, bool skipIfEmpty = true);
+
+    template <typename T>
+    void reflectOptionalObject (StringWriter &writer, const string &name, optional<T> &value) {
+        if (value) {
+            reflectObject(writer, name, value.value());
+        }
+    }
+
+    struct SaveOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "includeText", includeText);
+            writer.EndObject();
+        }
+
+        bool includeText { false };
+    };
+
+    struct TextDocumentSyncOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "openClose", openClose);
+            reflectInt(writer, "change", (int) change);
+            reflectBool(writer, "willSave", willSave);
+            reflectBool(writer, "willSaveWaitUntil", willSaveWaitUntil);
+            reflectOptionalObject(writer, "save", save);
+            writer.EndObject();
+        }
+
+        bool openClose { false };
+
+        TextDocumentSyncKind change { TextDocumentSyncKind::None };
+
+        bool willSave { false };
+
+        bool willSaveWaitUntil { false };
+
+        optional<SaveOptions> save {};
+    };
+
+    struct CompletionOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "resolveProvider", resolveProvider);
+            reflectVector(writer, "triggerCharacters", triggerCharacters);
+            writer.EndObject();
+        }
+
+        bool resolveProvider { false };
+
+        vector<string> triggerCharacters {};
+    };
+
+    struct SignatureHelpOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectVector(writer, "triggerCharacters", triggerCharacters);
+            writer.EndObject();
+        }
+
+        vector<string> triggerCharacters {};
+    };
+
+    struct DocumentFilter : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectString(writer, "language", language);
+            reflectString(writer, "scheme", scheme);
+            reflectString(writer, "pattern", pattern);
+            writer.EndObject();
+        }
+
+        string language {};
+
+        string scheme {};
+
+        string pattern {};
+    };
+
+    struct TextDocumentRegistrationOptions {
+        vector<DocumentFilter> documentSelector {};
+    };
+
+    struct StaticRegistrationOptions {
+        string id {};
+    };
+
+    struct RegistrationOptions : StaticRegistrationOptions, TextDocumentRegistrationOptions, Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectVector<DocumentFilter>(writer, "documentSelector", documentSelector);
+            reflectString(writer, "id", id);
+            writer.EndObject();
+        }
+    };
+
+    struct CodeActionOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectVector(writer, "codeActionKinds", codeActionKinds);
+            writer.EndObject();
+        }
+
+        vector<CodeActionKind> codeActionKinds {};
+    };
+
+    struct CodeLensOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "resolveProvider", resolveProvider);
+            writer.EndObject();
+        }
+
+        bool resolveProvider { false };
+    };
+
+    struct DocumentOnTypeFormattingOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectString(writer, "firstTriggerCharacter", firstTriggerCharacter);
+            reflectVector(writer, "moreTriggerCharacter", moreTriggerCharacter);
+            writer.EndObject();
+        }
+
+        string firstTriggerCharacter {};
+
+        vector<string> moreTriggerCharacter {};
+    };
+
+    struct RenameOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "prepareProvider", prepareProvider);
+            writer.EndObject();
+        }
+
+        bool prepareProvider { false };
+    };
+
+    struct DocumentLinkOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "resolveProvider", resolveProvider);
+            writer.EndObject();
+        }
+
+        bool resolveProvider { false };
+    };
+
+    struct ColorProviderOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            writer.EndObject();
+        }
+    };
+
+    struct FoldingRangeProviderOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            writer.EndObject();
+        }
+    };
+
+    struct ExecuteCommandOptions : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectVector(writer, "commands", commands);
+            writer.EndObject();
+        }
+
+        vector<string> commands {};
+    };
+
+    struct WorkspaceFolders : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectBool(writer, "supported", supported);
+            reflectString(writer, "changeNotifications", changeNotifications);
+            writer.EndObject();
+        }
+
+        bool supported { false };
+
+        string changeNotifications {};
+    };
+
+    struct Workspace : Reflectable {
+        void reflect (StringWriter &writer) override {
+            writer.StartObject();
+            reflectOptionalObject(writer, "workSpaceFolders", workspaceFolders);
+            writer.EndObject();
+        }
+
+        optional<WorkspaceFolders> workspaceFolders {};
+    };
+
+    struct ServerCapabilities : Reflectable {
+        void reflect (StringWriter &writer) final {
+            writer.StartObject();
+            reflectOptionalObject(writer, "textDocumentSync", textDocumentSync);
+            reflectBool(writer, "hoverProvider", hoverProvider);
+            reflectOptionalObject(writer, "completionProvider", completionProvider);
+            reflectOptionalObject(writer, "signatureHelpProvider", signatureHelpProvider);
+            reflectBool(writer, "definitionProvider", definitionProvider);
+            reflectOptionalObject(writer, "typeDefinitionProvider", typeDefinitionProvider);
+            reflectOptionalObject(writer, "implementationProvider", implementationProvider);
+            reflectBool(writer, "referencesProvider", referencesProvider);
+            reflectBool(writer, "documentHighlightProvider", documentHighlightProvider);
+            reflectBool(writer, "documentSymbolProvider", documentSymbolProvider);
+            reflectBool(writer, "workplaceSymbolProvider", workplaceSymbolProvider);
+            reflectOptionalObject(writer, "codeActionProvider", codeActionProvider);
+            reflectOptionalObject(writer, "codeLensProvider", codeLensProvider);
+            reflectBool(writer, "documentFormattingProvider", documentFormattingProvider);
+            reflectOptionalObject(writer, "documentOnTypeFormattingProvider", documentOnTypeFormattingProvider);
+            reflectOptionalObject(writer, "renameProvider", renameProvider);
+            reflectOptionalObject(writer, "documentLinkProvider", documentLinkProvider);
+            reflectOptionalObject(writer, "colorProvider", colorProvider);
+            reflectOptionalObject(writer, "foldingRangeProvider", foldingRangeProvider);
+            reflectOptionalObject(writer, "executeCommandProvider", executeCommandProvider);
+            reflectOptionalObject(writer, "workspace", workspace);
+            // TODO: Reflect experimental Value ?
+            writer.EndObject();
+        }
+
+        optional<TextDocumentSyncOptions> textDocumentSync {};
+
+        bool hoverProvider { false };
+
+        optional<CompletionOptions> completionProvider {};
+
+        optional<SignatureHelpOptions> signatureHelpProvider {};
+
+        bool definitionProvider { false };
+
+        optional<RegistrationOptions> typeDefinitionProvider {};
+
+        optional<RegistrationOptions> implementationProvider {};
+
+        bool referencesProvider { false };
+
+        bool documentHighlightProvider { false };
+
+        bool documentSymbolProvider { false };
+
+        bool workplaceSymbolProvider { false };
+
+        optional<CodeActionOptions> codeActionProvider {};
+
+        optional<CodeLensOptions> codeLensProvider {};
+
+        bool documentFormattingProvider { false };
+
+        optional<DocumentOnTypeFormattingOptions> documentOnTypeFormattingProvider {};
+
+        optional<RenameOptions> renameProvider {};
+
+        optional<DocumentLinkOptions> documentLinkProvider {};
+
+        optional<ColorProviderOptions> colorProvider {};
+
+        optional<FoldingRangeProviderOptions> foldingRangeProvider {};
+
+        optional<ExecuteCommandOptions> executeCommandProvider {};
+
+        optional<Workspace> workspace {};
+
+        optional<Value> experimental {};
+    };
+}
 
 #endif //LATEX_LANGUAGE_SERVER_DEFINITIONS_H

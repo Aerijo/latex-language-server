@@ -1,12 +1,17 @@
 #include <iostream>
+#include <optional>
+#include <cstring>
 #include <thread>
-#include <string>
-#include <vector>
 
 #include <rapidjson/document.h>
 
-#include "ioThreads.h"
+#include "Handler.h"
+#include "messaging.h"
+#include "QueueManager.h"
 
+using std::optional;
+
+using rapidjson::Document;
 
 optional<const char *> getString (Document &message, const char *key) {
     auto itr = message.FindMember(key);

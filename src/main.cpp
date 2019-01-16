@@ -3,11 +3,9 @@
 #include <tree_sitter/runtime.h>
 #include "config.h"
 
-#include <QueueManager.h>
-#include <ioThreads.h>
-#include <lsp-tools/MessageHandler.h>
-
-#include <handlerRegistration.h>
+#include "handlerRegistration.h"
+#include "MessageHandler.h"
+#include "QueueManager.h"
 
 extern "C" { TSLanguage *tree_sitter_latex(); }
 
@@ -16,6 +14,8 @@ GlobalConfig *g_config;
 int main (int argc, char** argv, const char** env) {
 
     g_config = new GlobalConfig();
+
+//    std::cerr << sizeof(Value) << std::endl;
 
     TSParser *parser = ts_parser_new();
 

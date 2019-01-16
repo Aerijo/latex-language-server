@@ -2,14 +2,14 @@
 
 #include "position.h"
 
-Point::Point (f_index row, f_index column) : row(row), column(column) {}
+Point::Point (f_index row, f_index column) : row (row), column (column) {}
 
 bool Point::hasValue () const {
     return row >= 0 && column >= 0;
 }
 
 string Point::toString () const {
-    return to_string(row + 1) + ":" + to_string(column + 1);
+    return std::to_string(row + 1) + ":" + std::to_string(column + 1);
 }
 
 string Point::toExtendedString (const string &fileName) const {
@@ -133,8 +133,8 @@ bool Range::intersectsWith (const Range &that, bool exclusive) const {
 }
 
 Range Range::merge (const Range &that) const {
-    Point merged_start = min(start, that.start);
-    Point merged_end = max(end, that.end);
+    Point merged_start = std::min(start, that.start);
+    Point merged_end = std::max(end, that.end);
 
     return Range(merged_start, merged_end);
 }

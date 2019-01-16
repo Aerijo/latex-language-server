@@ -4,11 +4,27 @@
 #include <string>
 #include <rapidjson/writer.h>
 
-#define IdNumberType int_fast64_t
-
 using std::string;
 
-using namespace::rapidjson;
+using rapidjson::Writer;
+using rapidjson::StringBuffer;
+
+#define IdNumberType int_fast64_t
+
+#define INIT_WRITER \
+    StringBuffer buffer;\
+    Writer<StringBuffer> writer (buffer); \
+    writer.StartObject(); \
+    writer.Key("jsonrpc"); \
+    writer.String("2.0");
+
+#define SEND_MESSAGE \
+    writer.EndObject(); \
+    sendMessage(buffer);
+
+typedef int_fast32_t f_index; // used for Position
+
+typedef Writer<StringBuffer> StringWriter;
 
 struct Id {
     Id () = delete; // disallow "blank" Id objects; if it exists, it must be tied to a message

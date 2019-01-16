@@ -2,9 +2,10 @@
 #define LANGUAGESERVER_TOOLS_TYPES_H
 
 #include <string>
-#include <limits>
 
-using namespace std;
+#include "definitions.h"
+
+using std::string;
 
 /*
  * We use signed type so
@@ -14,14 +15,6 @@ using namespace std;
  * We also basically assume no overflows will occur. Whoever wants
  * to raise and fix that issue is welcome to.
  */
-typedef int_fast32_t f_index;
-
-typedef string DocumentUri;
-typedef string MarkupKind;
-typedef int SymbolKind;
-typedef int CompletionItemKind;
-typedef string CodeActionKind;
-
 struct Point {
     f_index row;
     f_index column;

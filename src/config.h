@@ -13,7 +13,7 @@ using std::optional;
 using std::string;
 using std::vector;
 
-using namespace rapidjson;
+using rapidjson::Value;
 
 namespace Config {
 

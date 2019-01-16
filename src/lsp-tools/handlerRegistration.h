@@ -1,7 +1,7 @@
 #ifndef LATEX_LANGUAGE_SERVER_HANDLERREGISTRATION_H
 #define LATEX_LANGUAGE_SERVER_HANDLERREGISTRATION_H
 
-#include <lsp-tools/MessageHandler.h>
+#include "MessageHandler.h"
 
 #include "handlers/initialize.h"
 

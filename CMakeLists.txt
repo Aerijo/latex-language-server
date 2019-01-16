@@ -5,24 +5,29 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall")
 
+add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
+
 add_executable(latex_language_server
         src/main.cpp
+        src/config.h
+
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ioThreads.cpp
         src/lsp-tools/position.cpp
-        src/lsp-tools/ThreadedQueue.cpp
+        src/lsp-tools/ThreadedQueue.h
+        src/lsp-tools/Handler.h
+        src/lsp-tools/definitions.h
+        src/lsp-tools/MessageHandler.cpp
+        src/lsp-tools/handlerRegistration.h
+        src/lsp-tools/messaging.cpp
+        src/lsp-tools/HandlerManager.cpp
+
+        src/handlers/initialize.cpp
+
         third_party/tree-sitter/src/runtime/runtime.c
         third_party/tree-sitter-latex/src/catcode.cc
         third_party/tree-sitter-latex/src/scanner.cc
-        third_party/tree-sitter-latex/src/parser.c
-        src/lsp-tools/Handler.h
-        src/lsp-tools/Handler.cpp
-        src/handlers/initialize.cpp
-        src/lsp-tools/definitions.h
-        src/lsp-tools/MessageHandler.cpp
-        src/lsp-tools/MessageHandler.h
-        src/lsp-tools/handlerRegistration.h
-        src/handlers/initialize.h src/lsp-tools/messaging.h src/lsp-tools/messaging.cpp src/config.h)
+        third_party/tree-sitter-latex/src/parser.c)
 
 target_include_directories(latex_language_server PRIVATE
         src

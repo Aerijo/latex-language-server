@@ -3,9 +3,10 @@
 
 #include <rapidjson/document.h>
 
+#include "QueueManager.h"
 #include "ThreadedQueue.h"
 
-using namespace rapidjson;
+using rapidjson::Document;
 
 class QueueManager {
 private:

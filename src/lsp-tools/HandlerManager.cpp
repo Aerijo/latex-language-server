@@ -1,6 +1,4 @@
-#include <iostream>
-
-#include "Handler.h"
+#include "HandlerManager.h"
 
 HandlerManager *HandlerManager::getInstance() {
     static HandlerManager instance;
@@ -52,4 +50,3 @@ void HandlerManager::registerHandler (RequestHandler *handler) {
 void HandlerManager::registerHandler (NotificationHandler *handler) {
     notificationHandlers.push_back(handler);
 }
-

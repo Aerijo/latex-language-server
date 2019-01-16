@@ -1,8 +1,19 @@
-#include "MessageHandler.h"
-#include "ioThreads.h"
-#include "QueueManager.h"
+#include <iostream>
+#include <optional>
+#include <string>
+
 #include "definitions.h"
+
+#include "Handler.h"
+#include "ioThreads.h"
+#include "MessageHandler.h"
 #include "messaging.h"
+#include "QueueManager.h"
+
+using std::optional;
+using std::string;
+
+using rapidjson::Value;
 
 void MessageHandler::init () {
     handlers = HandlerManager::getInstance();

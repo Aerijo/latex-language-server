@@ -1,19 +1,15 @@
 #ifndef LATEX_LANGUAGE_SERVER_HANDLER_H
 #define LATEX_LANGUAGE_SERVER_HANDLER_H
 
-#include <vector>
-#include <string>
-#include <unordered_map>
+#include <optional>
 
-#include <rapidjson/schema.h>
 #include <rapidjson/document.h>
-#include <lsp-tools/definitions.h>
 
-using std::string;
+#include "definitions.h"
+
 using std::optional;
-using std::vector;
 
-using namespace rapidjson;
+using rapidjson::Value;
 
 /**
  * Identifying messages:
@@ -30,23 +26,23 @@ using namespace rapidjson;
  * ^ Response apparently can omit both "result" and "error", but a null result is preferred to indicate success
  *
  */
-
-enum class HandlerType {
-    Request,
-    Response,
-    Notification
-};
-
 class Handler {
-protected:
-    explicit Handler (HandlerType type) : type (type) {}
+public:
+    enum class Type {
+        Request,
+        Response,
+        Notification
+    };
 
-    HandlerType type;
+protected:
+    explicit Handler (Handler::Type type) : type (type) {}
+
+    Handler::Type type;
 };
 
 class RequestHandler : public Handler {
 public:
-    explicit RequestHandler (const char *method) : Handler (HandlerType::Request), method (method) {}
+    explicit RequestHandler (const char *method) : Handler (Handler::Type::Request), method (method) {}
 
     const char *method;
 
@@ -55,7 +51,7 @@ public:
 
 class NotificationHandler : public Handler {
 public:
-    explicit NotificationHandler (const char *method) : Handler (HandlerType::Notification), method (method) {}
+    explicit NotificationHandler (const char *method) : Handler (Handler::Type::Notification), method (method) {}
 
     const char *method;
 
@@ -64,7 +60,7 @@ public:
 
 class ResponseHandler : public Handler {
 public:
-    explicit ResponseHandler (Id id) : Handler (HandlerType::Response), id (id) {}
+    explicit ResponseHandler (Id id) : Handler (Handler::Type::Response), id (id) {}
 
     Id id;
 
@@ -85,26 +81,5 @@ public:
     };
 };
 
-class HandlerManager {
-private:
-    static HandlerManager *instance;
-
-    vector<RequestHandler *> requestHandlers;
-    vector<NotificationHandler *> notificationHandlers;
-
-    // technically don't need to leave them separate, but it's a way to divide them "for free"
-    vector<ResponseHandler *> numberResponseHandlers;
-    vector<ResponseHandler *> stringResponseHandlers;
-
-public:
-    static HandlerManager *getInstance ();
-
-    optional<RequestHandler *> getRequestHandler (const char *method);
-    optional<ResponseHandler *> getResponseHandler (Id &id);
-    optional<NotificationHandler *> getNotificationHandler (const char *method);
-
-    void registerHandler (RequestHandler *handler);
-    void registerHandler (NotificationHandler *handler);
-};
 
 #endif //LATEX_LANGUAGE_SERVER_HANDLER_H

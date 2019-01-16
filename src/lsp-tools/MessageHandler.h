@@ -2,9 +2,11 @@
 #define LATEX_LANGUAGE_SERVER_MESSAGEHANDLER_H
 
 #include <rapidjson/document.h>
-#include <Handler.h>
 
-using namespace rapidjson;
+#include "Handler.h"
+#include "HandlerManager.h"
+
+using rapidjson::Document;
 
 class MessageHandler {
 private:

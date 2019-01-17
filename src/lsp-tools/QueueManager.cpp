@@ -1,6 +1,6 @@
 #include "QueueManager.h"
 
-QueueManager* QueueManager::instance;
+QueueManager* QueueManager::instance {};
 
 void QueueManager::init () {
     delete instance;

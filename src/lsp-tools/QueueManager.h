@@ -12,6 +12,7 @@ class QueueManager {
 private:
     QueueManager() = default;
     static QueueManager *instance;
+
 public:
     static QueueManager *getInstance () { return instance; };
     static void init ();

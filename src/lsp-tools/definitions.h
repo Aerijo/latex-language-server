@@ -146,7 +146,7 @@ namespace Init {
     struct Reflectable {
         virtual void reflect (StringWriter &writer) = 0;
 
-        virtual ~Reflectable () {};
+        virtual ~Reflectable () = default;
     };
 
     template<typename T>

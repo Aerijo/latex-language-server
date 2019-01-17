@@ -34,7 +34,7 @@ public:
         Notification
     };
 
-    void registerCapabilities (Init::ServerCapabilities &capabilities) {};
+    virtual void registerCapabilities (Init::ServerCapabilities &capabilities) {};
 
 protected:
     explicit Handler (Handler::Type type) : type (type) {}

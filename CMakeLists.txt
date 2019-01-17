@@ -22,12 +22,12 @@ add_executable(latex_language_server
         src/lsp-tools/messaging.cpp
         src/lsp-tools/HandlerManager.cpp
 
-        src/handlers/initialize.cpp
+        src/handlers/InitializeHandler.cpp
 
         third_party/tree-sitter/src/runtime/runtime.c
         third_party/tree-sitter-latex/src/catcode.cc
         third_party/tree-sitter-latex/src/scanner.cc
-        third_party/tree-sitter-latex/src/parser.c)
+        third_party/tree-sitter-latex/src/parser.c src/lsp-tools/definitions.cpp src/handlers/file/FileChangeHandler.cpp src/handlers/file/FileChangeHandler.h src/handlers/hover/HoverHandler.cpp src/handlers/hover/HoverHandler.h src/handlers/ShutDownHandler.cpp src/handlers/ShutDownHandler.h)
 
 target_include_directories(latex_language_server PRIVATE
         src

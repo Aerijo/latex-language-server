@@ -3,7 +3,7 @@
 
 #include <optional>
 #include <vector>
-#include <handlers/initialize.h>
+#include <handlers/InitializeHandler.h>
 
 #include "definitions.h"
 #include "Handler.h"

@@ -1,9 +1,4 @@
-#include <iostream>
-
 #include "definitions.h"
-#include "initialize.h"
-#include "HandlerManager.h"
-#include "messaging.h"
 
 namespace Init {
     void reflectBool (Writer<StringBuffer> &writer, const string &name, bool value, bool skipIfFalse) {
@@ -43,30 +38,4 @@ namespace Init {
         }
         writer.EndArray();
     }
-}
-
-void registerAllHandlerCapabilities (Init::ServerCapabilities &capabilities) {
-    HandlerManager::getInstance()->registerCapabilities(capabilities);
-}
-
-void InitializeHandler::run (Id &id, optional<Value> &params) {
-    std::cerr << "handling initialisation request...\n";
-
-    INIT_WRITER
-
-    writer.Key("id"); id.writeId(writer);
-
-    writer.Key("result"); writer.StartObject();
-
-    writer.Key("capabilities");
-
-    Init::ServerCapabilities capabilities {};
-
-    registerAllHandlerCapabilities(capabilities);
-
-    capabilities.reflect(writer);
-
-    writer.EndObject();
-
-    SEND_MESSAGE
 }

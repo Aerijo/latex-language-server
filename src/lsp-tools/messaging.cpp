@@ -142,11 +142,10 @@ Document getMessage () {
 
     for (size_t i = 0; i < length; i++) {
         char c = static_cast<char>(getchar());
-        std::cerr << c;
         buffer += c;
     }
 
-    std::cerr << "\n\n";
+    std::cerr << buffer << "\n\n";
 
     Document json;
     json.Parse(buffer);

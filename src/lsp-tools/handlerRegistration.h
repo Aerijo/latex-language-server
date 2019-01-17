@@ -5,6 +5,8 @@
 
 #include "handlers/file/FileChangeHandler.h"
 
+#include "handlers/autocomplete/CompletionProvider.h"
+
 #include "handlers/hover/HoverHandler.h"
 
 #include "handlers/InitializeHandler.h"
@@ -13,8 +15,9 @@
 void registerHandlers (MessageHandler *messageHandler) {
     messageHandler->registerHandler(new InitializeHandler());
     messageHandler->registerHandler(new FileChangeHandler());
-    messageHandler->registerHandler(new HoverHandler());
+//    messageHandler->registerHandler(new HoverHandler());
     messageHandler->registerHandler(new ShutDownHandler());
+    messageHandler->registerHandler(new CompletionProvider());
 }
 
 #endif //LATEX_LANGUAGE_SERVER_HANDLERREGISTRATION_H

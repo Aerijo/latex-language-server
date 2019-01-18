@@ -7,3 +7,6 @@
 [submodule "third_party/superstring"]
 	path = third_party/superstring
 	url = git@github.com:Aerijo/superstring.git
+[submodule "third_party/tree-sitter-biber"]
+	path = third_party/tree-sitter-biber
+	url = git@github.com:Aerijo/tree-sitter-biber.git

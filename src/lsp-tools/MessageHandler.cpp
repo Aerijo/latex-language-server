@@ -10,7 +10,7 @@
 #include "messaging.h"
 #include "QueueManager.h"
 
-using std::optional;
+//using std::optional;
 using std::string;
 
 using rapidjson::Value;
@@ -116,8 +116,8 @@ void MessageHandler::handleRequest (Document &message) {
 
     optional<RequestHandler *> handler = handlers->getRequestHandler(method);
 
-    if (handler.has_value()) {
-        handler.value()->run(id, params);
+    if (handler) {
+        (*handler)->run(id, params);
     } else {
         std::cerr << "Unhandled request " << method << "\n";
 

@@ -1,13 +1,10 @@
 #ifndef LATEX_LANGUAGE_SERVER_HANDLER_H
 #define LATEX_LANGUAGE_SERVER_HANDLER_H
 
-#include <optional>
-
 #include <rapidjson/document.h>
 
 #include "definitions.h"
 
-using std::optional;
 
 using rapidjson::Value;
 

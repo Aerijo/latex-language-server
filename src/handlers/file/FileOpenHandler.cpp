@@ -4,17 +4,17 @@
 void FileOpenHandler::run (optional<Value> &params) {
     if (!params) { handleMissingFileOpenParams(); return; }
 
-    Value &value = params.value();
-
-    Value &textDocument = value["textDocument"];
-
-    string uri = textDocument["uri"].GetString();
-
-    string languageId = textDocument["languageId"].GetString();
-
-    uint_fast64_t version = textDocument["version"].GetUint64();
-
-    string text = textDocument["text"].GetString();
+//    Value &value = params.value();
+//
+//    Value &textDocument = value["textDocument"];
+//
+//    string uri = textDocument["uri"].GetString();
+//
+//    string languageId = textDocument["languageId"].GetString();
+//
+//    uint_fast64_t version = textDocument["version"].GetUint64();
+//
+//    string text = textDocument["text"].GetString();
 
 
 }

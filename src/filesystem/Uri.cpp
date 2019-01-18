@@ -338,3 +338,11 @@ Uri Uri::file (string path) {
 
     return Uri { scheme, authority, path, empty, empty };
 }
+
+bool Uri::operator== (Uri &that) {
+    return scheme == that.scheme
+    && authority == that.authority
+    && path == that.path
+    && query == that.query
+    && fragment == that.fragment;
+}

@@ -1,14 +1,13 @@
 #ifndef LATEX_LANGUAGE_SERVER_INITIALIZE_H
 #define LATEX_LANGUAGE_SERVER_INITIALIZE_H
 
-#include <optional>
+#include <optional.h>
 
 #include <rapidjson/document.h>
 
 #include "definitions.h"
 #include "Handler.h"
 
-using std::optional;
 
 using rapidjson::Value;
 

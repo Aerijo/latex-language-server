@@ -1,7 +1,7 @@
 #ifndef LATEX_LANGUAGE_SERVER_CONFIG_H
 #define LATEX_LANGUAGE_SERVER_CONFIG_H
 
-#include <optional>
+//#include <optional>
 #include <string>
 #include <vector>
 
@@ -9,7 +9,7 @@
 
 #include "definitions.h"
 
-using std::optional;
+//using std::optional;
 using std::string;
 using std::vector;
 
@@ -18,7 +18,7 @@ using rapidjson::Value;
 namespace LConfig {
 
     struct DocumentUri {
-        DocumentUri () = delete;
+        DocumentUri () = default;
 
         explicit DocumentUri (const char *uri) : uri(uri) {}
 

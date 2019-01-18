@@ -8,7 +8,6 @@
 #include "definitions.h"
 #include "Handler.h"
 
-using std::optional;
 using std::vector;
 
 class HandlerManager {

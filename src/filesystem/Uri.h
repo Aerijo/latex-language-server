@@ -453,6 +453,8 @@ public:
     static Uri parse (const string &value);
 
     static Uri file (string value);
+
+    bool operator == (Uri &that);
 };
 
 #endif //LATEX_LANGUAGE_SERVER_URI_H

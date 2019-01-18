@@ -9,7 +9,7 @@
 #include "messaging.h"
 #include "QueueManager.h"
 
-using std::optional;
+//using std::optional;
 
 using rapidjson::Document;
 
@@ -31,15 +31,15 @@ void launchStdinLoop () {
 
             optional<const char *> method = getString(message, "method");
 
-            if (!method.value()) {
+            if (!method) {
                 sendError(nullptr, ResponseHandler::ErrorCode::InvalidRequest, "Was not expecting a response");
                 continue;
             }
 
-            if (std::strcmp(method.value(), "initialize") == 0) {
+            if (std::strcmp(*method, "initialize") == 0) {
                 QueueManager::pushMessage(message);
                 break;
-            } else if (std::strcmp(method.value(), "exit") == 0) {
+            } else if (std::strcmp(*method, "exit") == 0) {
                 std::cerr << "!!! Received exit notification !!! exiting\n";
                 exit(0);
             } else {

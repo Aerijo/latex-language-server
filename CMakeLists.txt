@@ -7,9 +7,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall")
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
 
+add_compile_definitions(PCRE2_CODE_UNIT_WIDTH=16)
+add_compile_definitions(HAVE_CONFIG_H)
+add_compile_definitions(SUPPORT_JIT)
+
 add_executable(latex_language_server
         src/main.cpp
-        src/config.h
+        src/lconfig.h
 
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ioThreads.cpp
@@ -27,7 +31,68 @@ add_executable(latex_language_server
         third_party/tree-sitter/src/runtime/runtime.c
         third_party/tree-sitter-latex/src/catcode.cc
         third_party/tree-sitter-latex/src/scanner.cc
-        third_party/tree-sitter-latex/src/parser.c src/lsp-tools/definitions.cpp src/handlers/file/FileChangeHandler.cpp src/handlers/file/FileChangeHandler.h src/handlers/hover/HoverHandler.cpp src/handlers/hover/HoverHandler.h src/handlers/ShutDownHandler.cpp src/handlers/ShutDownHandler.h src/handlers/autocomplete/CompletionProvider.cpp src/handlers/autocomplete/CompletionProvider.h src/filesystem/FileManager.cpp src/filesystem/FileManager.h src/handlers/file/FileOpenHandler.cpp src/handlers/file/FileOpenHandler.h src/handlers/file/FileCloseHandler.cpp src/handlers/file/FileCloseHandler.h src/handlers/file/FileSaveHandler.cpp src/handlers/file/FileSaveHandler.h src/filesystem/File.cpp src/filesystem/File.h src/filesystem/Uri.cpp src/filesystem/Uri.h)
+        third_party/tree-sitter-latex/src/parser.c
+
+
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_internal.h
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_chartables.c.dist
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_auto_possess.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_compile.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_config.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_context.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_dfa_match.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_error.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_find_bracket.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_jit_compile.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_maketables.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_match.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_match_data.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_newline.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_ord2utf.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_pattern_info.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_serialize.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_string_utils.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_study.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_substitute.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_substring.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_tables.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_ucd.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_valid_utf.c
+#        third_party/superstring/vendor/pcre/10.23/src/pcre2_xclass.c
+
+
+#        third_party/superstring/vendor/pcre/include/pcre2.h
+#        third_party/superstring/src/core/regex.cc
+        third_party/superstring/src/core/marker-index.cc
+        third_party/superstring/src/core/range.cc
+        third_party/superstring/src/core/patch.cc
+        third_party/superstring/src/core/point.cc
+        third_party/superstring/src/core/text-slice.cc
+        third_party/superstring/src/core/text-slice.cc
+        third_party/superstring/src/core/text.cc
+        third_party/superstring/src/core/text-buffer.cc
+
+        src/lsp-tools/definitions.cpp
+        src/handlers/file/FileChangeHandler.cpp
+        src/handlers/file/FileChangeHandler.h
+        src/handlers/hover/HoverHandler.cpp
+        src/handlers/hover/HoverHandler.h
+        src/handlers/ShutDownHandler.cpp
+        src/handlers/ShutDownHandler.h
+        src/handlers/autocomplete/CompletionProvider.cpp
+        src/handlers/autocomplete/CompletionProvider.h
+        src/filesystem/FileManager.cpp
+        src/filesystem/FileManager.h
+        src/handlers/file/FileOpenHandler.cpp
+        src/handlers/file/FileOpenHandler.h
+        src/handlers/file/FileCloseHandler.cpp
+        src/handlers/file/FileCloseHandler.h
+        src/handlers/file/FileSaveHandler.cpp
+        src/handlers/file/FileSaveHandler.h
+        src/filesystem/File.cpp
+        src/filesystem/File.h
+        src/filesystem/Uri.cpp
+        src/filesystem/Uri.h)
 
 target_include_directories(latex_language_server PRIVATE
         src
@@ -38,4 +103,7 @@ target_include_directories(latex_language_server PRIVATE
         third_party/tree-sitter/include
         third_party/tree-sitter/src
         third_party/tree-sitter/externals/utf8proc
-        third_party/tree-sitter-latex/src)
+        third_party/tree-sitter-latex/src
+        third_party/superstring/src/core
+        third_party/superstring/vendor/pcre/include
+        third_party/superstring/vendor/pcre/10.23/src)

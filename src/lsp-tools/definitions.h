@@ -1,14 +1,14 @@
 #ifndef LATEX_LANGUAGE_SERVER_DEFINITIONS_H
 #define LATEX_LANGUAGE_SERVER_DEFINITIONS_H
 
-#include <optional>
 #include <string>
 #include <vector>
+
+#include <optional.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 
-using std::optional;
 using std::string;
 using std::vector;
 
@@ -175,7 +175,7 @@ namespace Init {
     template <typename T>
     void reflectOptionalObject (StringWriter &writer, const string &name, optional<T> &value) {
         if (value) {
-            reflectObject(writer, name, value.value());
+            reflectObject(writer, name, *value);
         }
     }
 

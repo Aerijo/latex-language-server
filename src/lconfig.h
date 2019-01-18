@@ -15,7 +15,7 @@ using std::vector;
 
 using rapidjson::Value;
 
-namespace Config {
+namespace LConfig {
 
     struct DocumentUri {
         DocumentUri () = delete;
@@ -307,8 +307,8 @@ namespace Config {
 }; // end namespace Config
 
 struct GlobalConfig {
-    Config::LspConfig lsp {};
-    Config::LatexConfig latex {};
+    LConfig::LspConfig lsp {};
+    LConfig::LatexConfig latex {};
 };
 
 extern GlobalConfig *g_config;

@@ -12,7 +12,7 @@
 
 #include "text-buffer.h"
 
-extern "C" { TSLanguage *tree_sitter_latex(); }
+extern "C" { TSLanguage *tree_sitter_biber(); }
 
 GlobalConfig *g_config;
 
@@ -27,13 +27,13 @@ int main (int argc, char** argv, const char** env) {
 
     TextBuffer buffer {};
 
-    buffer.find_words_with_subsequence_in_range({ "foo" }, "bar", { { 0,0}, {3,4}});
+//    buffer.find_words_with_subsequence_in_range({ "foo" }, "bar", { { 0,0}, {3,4}});
 
 //    Text bazx = buffer
 
     TSParser *parser = ts_parser_new();
 
-    ts_parser_set_language(parser, tree_sitter_latex());
+    ts_parser_set_language(parser, tree_sitter_biber());
 
     FileManager::init();
     QueueManager::init();

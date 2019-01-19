@@ -59,6 +59,7 @@ add_executable(latex_language_server
         third_party/superstring/vendor/pcre2-10.32/src/pcre2_valid_utf.c
         third_party/superstring/vendor/pcre2-10.32/src/pcre2_xclass.c
 
+        third_party/superstring/src/core/encoding-conversion.cc
         third_party/superstring/src/core/regex.cc
         third_party/superstring/src/core/marker-index.cc
         third_party/superstring/src/core/range.cc
@@ -102,4 +103,5 @@ target_include_directories(latex_language_server PRIVATE
         third_party/tree-sitter/externals/utf8proc
         third_party/tree-sitter-biber/src
         third_party/superstring/src/core
+        third_party/superstring/vendor/libcxx
         third_party/superstring/vendor/pcre2-10.32/src)

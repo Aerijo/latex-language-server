@@ -110,7 +110,7 @@ string Uri::makeFsPath (const Uri &uri) {
             && uri.path[0] == CharCode::Slash
             && std::isalpha(uri.path[1])
             && uri.path[2] == CharCode::Colon
-    ) {
+            ) {
         value = static_cast<char>(std::tolower(uri.path[1])) + uri.path.substr(2);
     } else {
         value = uri.path;
@@ -301,11 +301,11 @@ Uri Uri::parse (const string &value) {
 
 void Uri::print () const {
     std::cout
-    << "[URI]\n\t- " << scheme
-    << "\n\t- " << authority
-    << "\n\t- " << path
-    << "\n\t- " << query
-    << "\n\t- " << fragment << std::endl;
+            << "[URI]\n\t- " << scheme
+            << "\n\t- " << authority
+            << "\n\t- " << path
+            << "\n\t- " << query
+            << "\n\t- " << fragment << std::endl;
 }
 
 Uri Uri::file (string path) {
@@ -325,7 +325,6 @@ Uri Uri::file (string path) {
                 path = string(itr, path.end());
                 if (path.empty()) path = "/";
 
-
                 return Uri { scheme, authority, path, empty, empty };
             }
         }
@@ -339,10 +338,10 @@ Uri Uri::file (string path) {
     return Uri { scheme, authority, path, empty, empty };
 }
 
-bool Uri::operator== (Uri &that) {
+bool Uri::operator == (Uri &that) {
     return scheme == that.scheme
-    && authority == that.authority
-    && path == that.path
-    && query == that.query
-    && fragment == that.fragment;
+           && authority == that.authority
+           && path == that.path
+           && query == that.query
+           && fragment == that.fragment;
 }

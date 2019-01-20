@@ -14,6 +14,7 @@
 #include "QueueManager.h"
 
 #include "filesystem/UtfHandler.h"
+#include <filesystem/File.h>
 
 #include "text-buffer.h"
 
@@ -28,13 +29,15 @@ int main (int argc, char** argv, const char** env) {
 
     g_config = new GlobalConfig();
 
-    UtfHandler utf {};
+    Uri uri = Uri::file("/foo");
 
-    u16string bar = u"abc" "\xD800" "def";
+    string languageId = "latex";
 
-    string foo = utf.utf16to8(bar);
+    string text = "hello world";
 
-    std::cout << foo << std::endl;
+    File file { uri, languageId, text };
+
+    file.print(std::cout);
 
     TSParser *parser = ts_parser_new();
 

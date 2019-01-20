@@ -90,7 +90,7 @@ add_executable(latex_language_server
         src/filesystem/File.cpp
         src/filesystem/File.h
         src/filesystem/Uri.cpp
-        src/filesystem/Uri.h)
+        src/filesystem/Uri.h src/filesystem/UtfHandler.cpp src/filesystem/UtfHandler.h)
 
 target_include_directories(latex_language_server PRIVATE
         src

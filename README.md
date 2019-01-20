@@ -1,4 +1,7 @@
 # latex-language-server
 Language server to provide various LaTeX tools
 
-NOTE: We will initially treat the files as watched on the client side. Later we can add support to watch files on the server, and the client can request this or not.
+NOTE: 
+
+- We will initially treat the server as working in a black box, only able to communicate with the client. We can later add direct filesystem support.
+- Text will be stored in a `superstring` TextBuffer, and we will treat UTF16 as a fixed width encoding. Any support of multibyte UTF16 will be purely coincidental.

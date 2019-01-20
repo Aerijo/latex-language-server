@@ -3,8 +3,6 @@
 
 #include <locale>
 
-//#include <utf8-conversions.h>
-
 #include <tree_sitter/runtime.h>
 #include <filesystem/Uri.h>
 
@@ -15,9 +13,9 @@
 #include "MessageHandler.h"
 #include "QueueManager.h"
 
-#include "text-buffer.h"
+#include "filesystem/UtfHandler.h"
 
-#include <encoding-conversion.h>
+#include "text-buffer.h"
 
 extern "C" { TSLanguage *tree_sitter_biber(); }
 
@@ -30,27 +28,13 @@ int main (int argc, char** argv, const char** env) {
 
     g_config = new GlobalConfig();
 
-    TextBuffer buffer {};
+    UtfHandler utf {};
 
-    auto conversion = transcoding_to("UTF-8");
-    u16string string = u"ab" "\xd83d" "\xde01" "cd";  // 'ab😁cd'
+    u16string bar = u"abc" "\xD800" "def";
 
-    size_t foo = 10;
+    string foo = utf.utf16to8(bar);
 
-    std::string output;
-
-    std::cout << string.length() << std::endl;
-
-    output.resize(foo);
-
-    size_t bytes_encoded = 0, start = 0;
-
-    bytes_encoded = conversion->encode(
-            string, &start, string.size(), output.data(), output.size());
-
-    output.resize(bytes_encoded);
-
-    std::cout << output << std::endl;
+    std::cout << foo << std::endl;
 
     TSParser *parser = ts_parser_new();
 

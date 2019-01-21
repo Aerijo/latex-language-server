@@ -8,8 +8,12 @@ bool File::operator == (File &that) {
 
 File::File (Uri &uri, string &languageId, string &text) : uri { uri }, languageId { languageId } {
     u16string converted = utf.utf8to16(text);
+    buffer.set_text(move(converted));
+}
 
-    buffer.set_text(converted);
+File::File (string &uri, string &languageId, string &text) : uri { Uri::parse(uri) }, languageId { languageId } {
+    u16string converted = utf.utf8to16(text);
+    buffer.set_text(move(converted));
 }
 
 void File::print (std::ostream &stream) {
@@ -17,3 +21,9 @@ void File::print (std::ostream &stream) {
 
     stream << utf.utf16to8(text);
 }
+
+void File::setTextInRange (Range oldRange, std::u16string &&text) {
+    buffer.set_text_in_range(oldRange, move(text));
+}
+
+

@@ -1,7 +1,6 @@
 #ifndef LATEX_LANGUAGE_SERVER_HANDLERMANAGER_H
 #define LATEX_LANGUAGE_SERVER_HANDLERMANAGER_H
 
-#include <optional>
 #include <vector>
 #include <handlers/InitializeHandler.h>
 

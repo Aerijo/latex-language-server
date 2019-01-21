@@ -9,13 +9,17 @@
 #include "Uri.h"
 #include "UtfHandler.h"
 
+/**
+ * A logical reflection of a file on the user's computer, including changes in the editor
+ * Kept in sync via JSON RPC document events
+ */
 class File {
 private:
     Uri uri;
 
     string languageId;
 
-    size_t version { 0 };
+    uint_fast64_t version { 0 };
 
     TSParser *parser { nullptr };
 
@@ -23,8 +27,11 @@ private:
 
     UtfHandler utf {};
 
+    bool openInEditor { true };
+
 public:
     File (Uri &uri, string &languageId, string &text);
+    File (string &uri, string &languageId, string &text);
 
     // All possibly relevant extentions
     enum class Type {
@@ -41,6 +48,8 @@ public:
     bool operator == (File &that);
 
     void print (std::ostream &stream);
+
+    void setTextInRange(Range oldRange, std::u16string &&text);
 };
 
 #endif //LATEX_LANGUAGE_SERVER_FILE_H

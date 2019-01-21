@@ -37,14 +37,17 @@ int main (int argc, char** argv, const char** env) {
 
     File file { uri, languageId, text };
 
-    file.print(std::cout);
-
     TSParser *parser = ts_parser_new();
 
     ts_parser_set_language(parser, tree_sitter_biber());
 
     FileManager::init();
     QueueManager::init();
+
+    string path = "/foo";
+    FileManager::add(path, &file);
+
+    FileManager::printFiles();
 
     auto messageHandler = new MessageHandler();
 

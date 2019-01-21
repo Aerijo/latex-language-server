@@ -1,5 +1,4 @@
 #include <iostream>
-#include <optional>
 #include <cstring>
 #include <thread>
 
@@ -9,8 +8,6 @@
 #include "messaging.h"
 #include "QueueManager.h"
 
-//using std::optional;
-
 using rapidjson::Document;
 
 optional<const char *> getString (Document &message, const char *key) {
@@ -19,7 +16,7 @@ optional<const char *> getString (Document &message, const char *key) {
         return {};
     }
 
-    return { itr->value.GetString() };
+    return optional { itr->value.GetString() };
 }
 
 void launchStdinLoop () {

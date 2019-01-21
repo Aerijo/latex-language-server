@@ -160,7 +160,7 @@ Uri Uri::parse (const string &value) {
     itr++;
 
     // We have started building a segment, so a scheme is possible.
-    // However, we if we see a /?# before : then we need to reinterpret what we have been building
+    // However, we if we see [/?#] before : then we need to reinterpret what we have been building
     // If we reach the end seeing none of these, then the whole thing is a path segment
     for (; itr != end; itr++) {
         switch (*itr) {
@@ -185,6 +185,7 @@ Uri Uri::parse (const string &value) {
                     default:
                         goto path;
                 }
+            // TODO
             case '/':
                 // cannot jump from scheme to authority without colon; must actually be a path
             case '?':

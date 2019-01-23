@@ -1,5 +1,6 @@
 #include <filesystem/File.h>
 #include <filesystem/FileManager.h>
+#include <biber/BibIndexer.h>
 #include "FileChangeHandler.h"
 
 void FileChangeHandler::registerCapabilities (Init::ServerCapabilities &capabilities) {
@@ -65,6 +66,12 @@ void FileChangeHandler::run (optional<Value> &params) {
             text = change["text"].GetString();
             file->setText(std::move(text));
         }
+    }
+
+    if (file->hasParser) {
+        BibIndexer indexer { file };
+
+        indexer.completeIndex();
     }
 }
 

@@ -9,7 +9,10 @@ using std::stack;
 void reflectTSPoint (StringWriter &writer, TSPoint &point) {
     writer.StartObject();
     writer.Key("line"); writer.Uint64(point.row);
-    writer.Key("character"); writer.Uint64(point.column);
+
+    // NOTE: The column is in bytes, so we translate to UTF16. This should be fully LSP compliant,
+    //  as it also considers multibyte UTF16 characters to also take up multiple columns
+    writer.Key("character"); writer.Uint64(point.column >> 1);
     writer.EndObject();
 }
 

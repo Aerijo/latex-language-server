@@ -6,6 +6,7 @@
 
 #include <text-buffer.h>
 
+#include "lsp-tools/definitions.h"
 #include "Uri.h"
 #include "UtfHandler.h"
 
@@ -19,9 +20,11 @@ private:
 
     string languageId;
 
-    uint_fast64_t version { 0 };
+    versionNum version { 0 };
 
     TSParser *parser { nullptr };
+
+    TSTree *tree { nullptr };
 
     TextBuffer buffer {};
 
@@ -30,8 +33,15 @@ private:
     bool openInEditor { true };
 
 public:
+    bool hasParser { false };
+
+    File () = delete;
+
     File (Uri &uri, string &languageId, string &text);
-    File (string &uri, string &languageId, string &text);
+
+    File (string &uri, string &languageId, versionNum version, string &text);
+
+    ~File ();
 
     // All possibly relevant extentions
     enum class Type {
@@ -49,7 +59,23 @@ public:
 
     void print (std::ostream &stream);
 
+    void setTextInRange(Range oldRange, std::string &&text);
+
+    void setText(std::string &&text);
+
     void setTextInRange(Range oldRange, std::u16string &&text);
+
+    bool validNextVersion (versionNum nextVersion);
+
+    void setVersion (versionNum nextVersion);
+
+    void executeParse ();
+
+    void setupParser ();
+
+    TSTree *getParseTree ();
+
+    string getPath ();
 };
 
 #endif //LATEX_LANGUAGE_SERVER_FILE_H

@@ -130,7 +130,18 @@ void MessageHandler::handleResponse (Document &message) {
 }
 
 void MessageHandler::handleNotification (Document &message) {
+    const char *method = message["method"].GetString();
 
+    optional<Value> params = getObject(message, "params");
+
+    optional<NotificationHandler *> handler = handlers->getNotificationHandler(method);
+
+    if (handler) {
+        (*handler)->run(params);
+    } else {
+//        Not handling a notification is hardly exceptional
+//        std::cerr << "Unhandled notification " << method << "\n";
+    }
 }
 
 void MessageHandler::handleUnknown (Document &message) {

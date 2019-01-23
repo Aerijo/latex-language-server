@@ -3,7 +3,7 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -O3")
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
 
@@ -90,7 +90,7 @@ add_executable(latex_language_server
         src/filesystem/File.cpp
         src/filesystem/File.h
         src/filesystem/Uri.cpp
-        src/filesystem/Uri.h src/filesystem/UtfHandler.cpp src/filesystem/UtfHandler.h)
+        src/filesystem/Uri.h src/filesystem/UtfHandler.cpp src/filesystem/UtfHandler.h src/filesystem/TextBufferInput.cpp src/filesystem/TextBufferInput.h src/biber/BibManager.cpp src/biber/BibManager.h src/biber/BibIndexer.cpp src/biber/BibIndexer.h)
 
 target_include_directories(latex_language_server PRIVATE
         src

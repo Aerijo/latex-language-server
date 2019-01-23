@@ -19,9 +19,12 @@ private:
 
 public:
     static void init ();
+
     static FileManager *getInstance () { return instance; };
 
     static void add (string &path, File *file);
+
+    static File *get (string &uri);
 
     static void printFiles ();
 };

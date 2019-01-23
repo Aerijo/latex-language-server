@@ -29,13 +29,13 @@ int main (int argc, char** argv, const char** env) {
 
     g_config = new GlobalConfig();
 
-    Uri uri = Uri::file("/foo");
-
-    string languageId = "latex";
-
-    string text = "hello world";
-
-    File file { uri, languageId, text };
+//    Uri uri = Uri::file("/foo");
+//
+//    string languageId = "latex";
+//
+//    string text = "hello world";
+//
+//    File file { uri, languageId, text };
 
     TSParser *parser = ts_parser_new();
 
@@ -44,10 +44,10 @@ int main (int argc, char** argv, const char** env) {
     FileManager::init();
     QueueManager::init();
 
-    string path = "/foo";
-    FileManager::add(path, &file);
-
-    FileManager::printFiles();
+//    string path = "/foo";
+//    FileManager::add(path, &file);
+//
+//    FileManager::printFiles();
 
     auto messageHandler = new MessageHandler();
 

@@ -301,7 +301,7 @@ Uri Uri::parse (const string &value) {
 }
 
 void Uri::print () const {
-    std::cout
+    std::cerr
             << "[URI]\n\t- " << scheme
             << "\n\t- " << authority
             << "\n\t- " << path

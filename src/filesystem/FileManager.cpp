@@ -18,5 +18,9 @@ void FileManager::printFiles () {
 }
 
 void FileManager::add (string &path, File *file) {
-    files[path] = file;
+    files[path] = file; // TODO: Handle existng file (e.g., if already watched before opening in editor)
+}
+
+File *FileManager::get (string &uri) {
+    return files[uri];
 }

@@ -4,6 +4,7 @@
 #include <lsp-tools/Handler.h>
 
 class FileOpenHandler : public NotificationHandler {
+public:
     FileOpenHandler () : NotificationHandler ("textDocument/didOpen") {};
 
     void run (optional<Value> &params) override;

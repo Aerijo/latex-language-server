@@ -8,6 +8,12 @@ void sendMessage (StringBuffer &buffer) {
             << "\r\n\r\n"
             << buffer.GetString();
     std::cout.flush();
+
+    std::cerr
+            << "Content-Length: " << buffer.GetLength()
+            << "\r\n\r\n"
+            << buffer.GetString();
+    std::cerr.flush();
 }
 
 void sendMessage (Document &message) {
@@ -145,7 +151,7 @@ Document getMessage () {
         buffer += c;
     }
 
-    std::cerr << buffer << "\n\n";
+//    std::cerr << buffer << "\n\n";
 
     Document json;
     json.Parse(buffer);

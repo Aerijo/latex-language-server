@@ -16,7 +16,8 @@ using rapidjson::Value;
 using rapidjson::Writer;
 using rapidjson::StringBuffer;
 
-#define IdNumberType int_fast64_t
+typedef int_fast64_t IdNumberType;
+typedef int_fast64_t versionNum;
 
 #define INIT_WRITER \
     StringBuffer buffer;\

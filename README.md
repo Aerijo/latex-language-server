@@ -18,4 +18,4 @@ NOTE:
          - Hyperclick references, labels, etc
          - Citation autocomplete
          - Document structure (for folding and navigation tree)
-        - Then dynamic autocomplete, and anything else I can think of.
+        - Then dynamic autocomplete, compiling support, and anything else I can think of.

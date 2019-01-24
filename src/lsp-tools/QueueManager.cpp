@@ -11,7 +11,7 @@ void QueueManager::writeStdout (Document &message) {
     getInstance()->for_stdout.enqueue(std::move(message));
 }
 
-void QueueManager::pushMessage (Document &message) {
-    getInstance()->for_handlers.enqueue(std::move(message));
+void QueueManager::pushMessage (Document &message, bool priority) {
+    getInstance()->for_handlers.enqueue(std::move(message), priority);
 }
 

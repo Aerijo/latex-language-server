@@ -207,6 +207,18 @@ void launchStdinLoop () {
         while (true) {
             Document message = getMessage();
 
+            if (message.HasMember("method")) {
+                const char *textDocument = "textDocument/";
+                const size_t len = strlen(textDocument);
+                const char *method = message["method"].GetString();
+                if (strncmp(textDocument, method, len) == 0) {
+                    if (strcmp("didOpen", method + len) == 0 || strcmp("didChange", method + len) == 0) {
+                        QueueManager::pushMessage(message, true);
+                        continue;
+                    }
+                }
+            }
+
             QueueManager::pushMessage(message);
         }
     }).detach();
@@ -220,5 +232,6 @@ void launchStdoutLoop () {
             Document message = queue->for_stdout.dequeue();
             sendMessage(message);
         }
+
     }).detach();
 }

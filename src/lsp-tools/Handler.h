@@ -5,7 +5,6 @@
 
 #include "definitions.h"
 
-
 using rapidjson::Value;
 
 /**

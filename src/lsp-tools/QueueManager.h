@@ -17,7 +17,7 @@ public:
     static QueueManager *getInstance () { return instance; };
     static void init ();
     static void writeStdout (Document &message);
-    static void pushMessage (Document &message);
+    static void pushMessage (Document &message, bool priority = false);
 
     ThreadedQueue<Document> for_stdout;
     ThreadedQueue<Document> for_handlers;

@@ -86,12 +86,12 @@ void File::setTextInRange (Range oldRange, std::u16string &&text) {
     if (hasParser) {
         executeParse();
 
-        std::cerr << "Updated parse tree\n";
-        TSNode root_node = ts_tree_root_node(tree);
-
-        char *string = ts_node_string(root_node);
-
-        std::cerr << "Syntax tree:\n" << string << "\n";
+//        std::cerr << "Updated parse tree\n";
+//        TSNode root_node = ts_tree_root_node(tree);
+//
+//        char *string = ts_node_string(root_node);
+//
+//        std::cerr << "Syntax tree:\n" << string << "\n";
     }
 }
 

@@ -9,11 +9,11 @@ void sendMessage (StringBuffer &buffer) {
             << buffer.GetString();
     std::cout.flush();
 
-    std::cerr
-            << "Content-Length: " << buffer.GetLength()
-            << "\r\n\r\n"
-            << buffer.GetString();
-    std::cerr.flush();
+//    std::cerr
+//            << "Content-Length: " << buffer.GetLength()
+//            << "\r\n\r\n"
+//            << buffer.GetString();
+//    std::cerr.flush();
 }
 
 void sendMessage (Document &message) {

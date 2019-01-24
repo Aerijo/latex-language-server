@@ -3,9 +3,11 @@ Language server to provide various LaTeX tools
 
 You're currently looking at the most complicated package ever to detect syntax errors in `.bib` files. More features are planned.
 
-NOTE: 
-
-- TODO: Convert all JSON receiving to SAX instead of DOM; have handlers provide a reader
+TODO: 
+- Convert all JSON receiving to SAX instead of DOM; have handlers provide a reader
+- Find and fix all memory leaks (our Tree-sitter handling likely has a few)
+    
+NOTE:
 - Text is stored in a `superstring` TextBuffer, and we treat UTF16 as a fixed width encoding. Any support of multibyte UTF16 will be purely coincidental.
 - Initial plan was act like we're in a black box; new plan is use the file system like every other language server (and because the protocol has no spec on how to request files and directories). If someone wants it, they can add black box compatibility. I sure only plan on using it locally.
 - Planned Features:

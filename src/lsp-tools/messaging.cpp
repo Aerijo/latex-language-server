@@ -166,6 +166,8 @@ Document getMessage () {
         std::cerr << "Error code: " << error << "\n";
 
         sendError(nullptr, ResponseHandler::ErrorCode::ParseError, "Failed to parse JSON");
+
+        return getMessage();
     }
 
     return json;

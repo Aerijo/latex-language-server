@@ -59,11 +59,11 @@ public:
 
     void print (std::ostream &stream);
 
-    void setTextInRange(Range oldRange, std::string &&text);
+    void setTextInRange (Range oldRange, std::string &&text);
 
-    void setText(std::string &&text);
+    void setText (std::string &&text);
 
-    void setTextInRange(Range oldRange, std::u16string &&text);
+    void setTextInRange (Range oldRange, std::u16string &&text);
 
     bool validNextVersion (versionNum nextVersion);
 

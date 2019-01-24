@@ -26,7 +26,21 @@ void File::setTextInRange (Range oldRange, std::string &&text) {
     setTextInRange(oldRange, utf.utf8to16(text));
 }
 
+
+/*
+ *    0   1   2   3   4
+ * 0:   a | b | c | \n
+ *
+ *    4   5   6   7
+ * 1:   d | e | f
+ *
+ * When we are on char i [0:a, 1:b, ...], we want the newline position to be registered as the
+ * index after (so 4 in this example, where i would be 3). This gives character == length - newline position,
+ * even when there are no newlines in the text.
+ */
 TSPoint TSEndPointOfText (u16string &text) {
+    if (text.empty()) return TSPoint { 0, 0 };
+
     uint32_t newlines = 0;
     auto length = static_cast<uint32_t>(text.length());
 
@@ -38,18 +52,18 @@ TSPoint TSEndPointOfText (u16string &text) {
         switch (c) {
             case '\r':
                 newlines++;
-                lastNewlineIndex = i;
+                lastNewlineIndex = i + 1;
                 if (i + 1 < length && text[i + 1] == '\n') { i++; lastNewlineIndex++; }
                 break;
             case '\n':
                 newlines++;
-                lastNewlineIndex = i;
+                lastNewlineIndex = i + 1;
                 break;
             default: {}
         }
     }
 
-    return TSPoint { newlines, length - lastNewlineIndex - 1 };
+    return TSPoint { newlines, length - lastNewlineIndex };
 }
 
 

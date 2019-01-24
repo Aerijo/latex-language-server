@@ -19,6 +19,12 @@ using rapidjson::StringBuffer;
 typedef int_fast64_t IdNumberType;
 typedef int_fast64_t versionNum;
 
+/*
+ * The following macros are used for convenience when making
+ * JSON strings. They use the name `writer` for a StringWriter
+ * variable.
+ */
+
 #define INIT_WRITER \
     StringBuffer buffer;\
     Writer<StringBuffer> writer (buffer); \
@@ -29,6 +35,30 @@ typedef int_fast64_t versionNum;
 #define SEND_MESSAGE \
     writer.EndObject(); \
     sendMessage(buffer);
+
+#define ADD_METHOD(method) \
+    writer.Key("method"); \
+    writer.String(method);
+
+#define ADD_ID(id) \
+    writer.Key("id"); \
+    id.reflect(writer);
+
+#define ADD_TS_POINT(point) \
+    writer.StartObject(); \
+    writer.Key("row"); \
+    writer.UInt64(point.row) \
+    writer.Key("character"); \
+    writer.UInt64(point.column >> 1) /* shift 1 because a TSPoint measures by byte, and LSP uses UTF16 width for character */ \
+    writer.EndObject();
+
+#define ADD_TS_RANGE(range) \
+    writer.StartObject(); \
+    writer.Key("start"); \
+    ADD_TS_POINT(range.start); \
+    writer.Key("end"); \
+    ADD_TS_POINT(range.end); \
+    writer.EndObject ();
 
 typedef int_fast32_t f_index; // used for Position
 

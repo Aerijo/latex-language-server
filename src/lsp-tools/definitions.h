@@ -23,6 +23,9 @@ typedef int_fast64_t versionNum;
  * The following macros are used for convenience when making
  * JSON strings. They expect the name `writer` for a StringWriter
  * variable.
+ *
+ * We use macros over inline functions because I don't like passing
+ * `writer` as an argument each time
  */
 
 #define INIT_WRITER \
@@ -179,7 +182,7 @@ namespace Init {
     struct Reflectable {
         virtual void reflect (StringWriter &writer) = 0;
 
-        virtual ~Reflectable () = default;
+//        virtual ~Reflectable () = default;
     };
 
     template<typename T>

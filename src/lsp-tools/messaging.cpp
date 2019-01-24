@@ -164,6 +164,8 @@ Document getMessage () {
 
         auto error = json.GetParseError();
         std::cerr << "Error code: " << error << "\n";
+
+        sendError(nullptr, ResponseHandler::ErrorCode::ParseError, "Failed to parse JSON");
     }
 
     return json;

@@ -21,7 +21,7 @@ typedef int_fast64_t versionNum;
 
 /*
  * The following macros are used for convenience when making
- * JSON strings. They use the name `writer` for a StringWriter
+ * JSON strings. They expect the name `writer` for a StringWriter
  * variable.
  */
 
@@ -38,29 +38,31 @@ typedef int_fast64_t versionNum;
 
 #define ADD_METHOD(method) \
     writer.Key("method"); \
-    writer.String(method);
+    writer.String(method)
 
 #define ADD_ID(id) \
     writer.Key("id"); \
-    id.reflect(writer);
+    id.writeId(writer)
 
 #define ADD_TS_POINT(point) \
     writer.StartObject(); \
-    writer.Key("row"); \
-    writer.UInt64(point.row) \
+    writer.Key("line"); \
+    writer.Uint64(point.row); \
     writer.Key("character"); \
-    writer.UInt64(point.column >> 1) /* shift 1 because a TSPoint measures by byte, and LSP uses UTF16 width for character */ \
-    writer.EndObject();
+    writer.Uint64(point.column >> 1); /* shift 1 because a TSPoint measures by byte, and LSP uses UTF16 width for character */ \
+    writer.EndObject()
 
 #define ADD_TS_RANGE(range) \
     writer.StartObject(); \
     writer.Key("start"); \
-    ADD_TS_POINT(range.start); \
+    ADD_TS_POINT(range.start_point); \
     writer.Key("end"); \
-    ADD_TS_POINT(range.end); \
-    writer.EndObject ();
+    ADD_TS_POINT(range.end_point); \
+    writer.EndObject()
 
-typedef int_fast32_t f_index; // used for Position
+#define ADD_NULL_RESULT() \
+    writer.Key("result"); \
+    writer.Null()
 
 typedef Writer<StringBuffer> StringWriter;
 
@@ -78,7 +80,7 @@ struct Id {
         const char *stringId;
     };
 
-    void writeId (Writer<StringBuffer> &writer) {
+    void writeId (StringWriter &writer) {
         switch (type) {
             case IdType::Number:
                 writer.Int64(numberId);

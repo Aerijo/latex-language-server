@@ -31,4 +31,8 @@ size_t readHeaders ();
 
 Document getMessage ();
 
+void launchStdinLoop ();
+
+void launchStdoutLoop ();
+
 #endif //LATEX_LANGUAGE_SERVER_MESSAGING_H

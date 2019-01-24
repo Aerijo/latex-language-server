@@ -19,11 +19,6 @@ public:
     bool empty () const { return size == 0; }
 
     void enqueue (T &&elem, bool priority = false) {
-
-        if (elem.IsNull()) {
-            std::cerr << "message going in null :(...\n";
-        }
-
         {
             std::lock_guard<std::mutex> lock(mutex);
             if (priority) {
@@ -39,8 +34,6 @@ public:
     T dequeue () {
         std::unique_lock<std::mutex> lock(mutex);
         c.wait(lock, [this]{ return size; });
-
-        if (size <= 0) exit(5);
 
         T elem;
 

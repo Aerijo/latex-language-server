@@ -1,6 +1,8 @@
 #include <iostream>
+#include <thread>
 
 #include "messaging.h"
+#include "QueueManager.h"
 
 void sendMessage (StringBuffer &buffer) {
     std::cout
@@ -23,7 +25,7 @@ void sendMessage (Document &message) {
 
     StringBuffer buffer;
 
-    Writer<StringBuffer> writer (buffer);
+    StringWriter writer (buffer);
     message.Accept(writer);
 
     sendMessage(buffer);
@@ -32,9 +34,9 @@ void sendMessage (Document &message) {
 void cancelRequest (Id &id) {
     INIT_WRITER
 
-    writer.Key("method"); writer.String("$/cancelRequest");
+    ADD_METHOD("$/cancelRequest");
     writer.Key("params"); writer.StartObject();
-        writer.Key("id"); id.writeId(writer);
+    ADD_ID(id);
     writer.EndObject();
 
     SEND_MESSAGE
@@ -165,4 +167,58 @@ Document getMessage () {
     }
 
     return json;
+}
+
+
+optional<const char *> getString (Document &message, const char *key) {
+    auto itr = message.FindMember(key);
+    if (itr == message.MemberEnd()) {
+        return {};
+    }
+
+    return optional { itr->value.GetString() };
+}
+
+void launchStdinLoop () {
+    std::cin.tie(nullptr);
+
+    std::thread([=]{
+        while (true) {
+            Document message = getMessage();
+
+            optional<const char *> method = getString(message, "method");
+
+            if (!method) {
+                sendError(nullptr, ResponseHandler::ErrorCode::InvalidRequest, "Was not expecting a response");
+                continue;
+            }
+
+            if (std::strcmp(*method, "initialize") == 0) {
+                QueueManager::pushMessage(message);
+                break;
+            } else if (std::strcmp(*method, "exit") == 0) {
+                std::cerr << "!!! Received exit notification !!! exiting\n";
+                exit(0);
+            } else {
+                sendError(nullptr, ResponseHandler::ErrorCode::MethodNotFound, "Awaiting initialize request");
+            }
+        }
+
+        while (true) {
+            Document message = getMessage();
+
+            QueueManager::pushMessage(message);
+        }
+    }).detach();
+}
+
+void launchStdoutLoop () {
+    std::thread([=]{
+        auto *queue = QueueManager::getInstance();
+
+        while (true) {
+            Document message = queue->for_stdout.dequeue();
+            sendMessage(message);
+        }
+    }).detach();
 }

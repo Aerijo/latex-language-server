@@ -15,7 +15,7 @@ void InitializeHandler::run (Id &id, optional<Value> &params) {
 
     INIT_WRITER
 
-    writer.Key("id"); id.writeId(writer);
+    ADD_ID(id);
 
     writer.Key("result"); writer.StartObject();
 

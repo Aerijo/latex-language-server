@@ -1,8 +1,0 @@
-#ifndef LANGUAGESERVER_TOOLS_IOTHREADS_H
-#define LANGUAGESERVER_TOOLS_IOTHREADS_H
-
-void launchStdinLoop ();
-
-void launchStdoutLoop ();
-
-#endif //LANGUAGESERVER_TOOLS_IOTHREADS_H

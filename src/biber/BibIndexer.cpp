@@ -6,27 +6,10 @@
 
 using std::stack;
 
-void reflectTSPoint (StringWriter &writer, TSPoint &point) {
-    writer.StartObject();
-    writer.Key("line"); writer.Uint64(point.row);
-
-    // NOTE: The column is in bytes, so we translate to UTF16. This should be fully LSP compliant,
-    //  as it also considers multibyte UTF16 characters to also take up multiple columns
-    writer.Key("character"); writer.Uint64(point.column >> 1);
-    writer.EndObject();
-}
-
-void reflectTSRange (StringWriter &writer, TSRange &range) {
-    writer.StartObject();
-    writer.Key("start"); reflectTSPoint(writer, range.start_point);
-    writer.Key("end"); reflectTSPoint(writer, range.end_point);
-    writer.EndObject();
-}
-
 void BibEntryIssue::reflect (StringWriter &writer) {
     writer.StartObject();
 
-    writer.Key("range"); reflectTSRange(writer, range);
+    writer.Key("range"); ADD_TS_RANGE(range);
     writer.Key("severity"); writer.Int(static_cast<int>(severity));
     writer.Key("code"); writer.Int(code);
     writer.Key("source"); writer.String(source);

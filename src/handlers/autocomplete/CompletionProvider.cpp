@@ -16,7 +16,7 @@ void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabil
 
 void CompletionProvider::run (Id &id, optional<Value> &params) {
     INIT_WRITER
-    writer.Key("id"); id.writeId(writer);
-    writer.Key("result"); writer.Null();
+    ADD_ID(id);
+    ADD_NULL_RESULT();
     SEND_MESSAGE
 }

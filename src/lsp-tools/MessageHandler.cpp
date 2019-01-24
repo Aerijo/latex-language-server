@@ -5,7 +5,6 @@
 #include "definitions.h"
 
 #include "Handler.h"
-#include "ioThreads.h"
 #include "MessageHandler.h"
 #include "messaging.h"
 #include "QueueManager.h"
@@ -147,7 +146,6 @@ void MessageHandler::handleNotification (Document &message) {
 void MessageHandler::handleUnknown (Document &message) {
 
 }
-
 
 void MessageHandler::registerHandler (RequestHandler *handler) {
     handlers->registerHandler(handler);

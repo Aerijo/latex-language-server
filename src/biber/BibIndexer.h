@@ -19,6 +19,14 @@ enum Error {
     Generic
 };
 
+enum Warning {
+
+};
+
+enum Info {
+
+};
+
 struct BibEntryIssue : Init::Reflectable {
     void reflect (StringWriter &writer) override;
 
@@ -28,7 +36,7 @@ struct BibEntryIssue : Init::Reflectable {
     TSRange range;
     Severity severity;
     Error code;
-    string message; // TODO: remove from here and generate on demand based on code?
+    string message; // TODO: remove from here and generate on demand based on error code?
     string source { "biber" };
 };
 
@@ -80,9 +88,15 @@ public:
 
     void addError (const TSNode &node, Error error, const string &msg);
 
+    void publishErrors ();
+
     void lintErrors (TSNode rootNode);
 
-    void publishErrors ();
+    void lintFile ();
+
+    void lintEntry (TSNode entry);
+
+    void lintComment ();
 };
 
 #endif //LATEX_LANGUAGE_SERVER_BIBINDEXER_H

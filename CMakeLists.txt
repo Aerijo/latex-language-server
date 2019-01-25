@@ -88,7 +88,7 @@ add_executable(latex_language_server
         src/filesystem/File.cpp
         src/filesystem/File.h
         src/filesystem/Uri.cpp
-        src/filesystem/Uri.h src/filesystem/UtfHandler.cpp src/filesystem/UtfHandler.h src/filesystem/TextBufferInput.cpp src/filesystem/TextBufferInput.h src/biber/BibManager.cpp src/biber/BibManager.h src/biber/BibIndexer.cpp src/biber/BibIndexer.h)
+        src/filesystem/Uri.h src/filesystem/UtfHandler.cpp src/filesystem/UtfHandler.h src/filesystem/TextBufferInput.cpp src/filesystem/TextBufferInput.h src/biber/BibManager.cpp src/biber/BibManager.h src/biber/BibIndexer.cpp src/biber/BibIndexer.h src/biber/Style.cpp src/biber/Style.h)
 
 target_include_directories(latex_language_server PRIVATE
         src

@@ -96,6 +96,7 @@ target_include_directories(latex_language_server PRIVATE
 
 target_include_directories(latex_language_server PRIVATE
         third_party/rapidjson/include
+        third_party/rapidxml-1.13
         third_party/tree-sitter/include
         third_party/tree-sitter/src
         third_party/tree-sitter/externals/utf8proc

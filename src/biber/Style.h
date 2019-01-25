@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <optional.h>
+#include <rapidxml.hpp>
 
 /*
  * Used to store all the expected entries, fields, field values, etc.
@@ -22,6 +23,8 @@
 using std::string;
 using std::u16string;
 using std::unordered_map;
+
+using namespace rapidxml;
 
 namespace Style {
 
@@ -59,7 +62,7 @@ class Style {
     unordered_map<u16string, UntypedField> untypedFields;
 
 public:
-    Style ()
+    explicit Style (xml_document<> &doc);
 
     optional<Entry> getEntry (u16string &name);
 

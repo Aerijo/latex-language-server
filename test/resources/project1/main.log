@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.1.22)  25 JAN 2019 19:59
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.1.22)  26 JAN 2019 20:22
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -143,6 +143,12 @@ Package biblatex Info: ... file 'blx-dm.def' found.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/blx-dm.def
 File: blx-dm.def 2018/11/02 v3.12 biblatex localization (PK/MW)
 )
+Package biblatex Info: Trying to load biblatex style data model...
+Package biblatex Info: ... file 'apa.dbx' found.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex-apa/apa.dbx
+File: apa.dbx 2018/04/02 v7.7 APA biblatex style data model
+)
 Package biblatex Info: Trying to load biblatex custom data model...
 Package biblatex Info: ... file 'biblatex-dm.cfg' not found.
 \c@afterword=\count134
@@ -181,38 +187,48 @@ Package biblatex Info: ... file 'biblatex-dm.cfg' not found.
 \c@savedshortauthor=\count167
 \c@shorteditor=\count168
 \c@savedshorteditor=\count169
-\c@labelname=\count170
-\c@savedlabelname=\count171
-\c@institution=\count172
-\c@savedinstitution=\count173
-\c@lista=\count174
-\c@savedlista=\count175
-\c@listb=\count176
-\c@savedlistb=\count177
-\c@listc=\count178
-\c@savedlistc=\count179
-\c@listd=\count180
-\c@savedlistd=\count181
-\c@liste=\count182
-\c@savedliste=\count183
-\c@listf=\count184
-\c@savedlistf=\count185
-\c@location=\count186
-\c@savedlocation=\count187
-\c@organization=\count188
-\c@savedorganization=\count189
-\c@origlocation=\count190
-\c@savedoriglocation=\count191
-\c@origpublisher=\count192
-\c@savedorigpublisher=\count193
-\c@publisher=\count194
-\c@savedpublisher=\count195
-\c@language=\count196
-\c@savedlanguage=\count197
-\c@origlanguage=\count198
-\c@savedoriglanguage=\count199
-\c@pageref=\count266
-\c@savedpageref=\count267
+\c@with=\count170
+\c@savedwith=\count171
+\c@writer=\count172
+\c@savedwriter=\count173
+\c@producer=\count174
+\c@savedproducer=\count175
+\c@execproducer=\count176
+\c@savedexecproducer=\count177
+\c@director=\count178
+\c@saveddirector=\count179
+\c@labelname=\count180
+\c@savedlabelname=\count181
+\c@institution=\count182
+\c@savedinstitution=\count183
+\c@lista=\count184
+\c@savedlista=\count185
+\c@listb=\count186
+\c@savedlistb=\count187
+\c@listc=\count188
+\c@savedlistc=\count189
+\c@listd=\count190
+\c@savedlistd=\count191
+\c@liste=\count192
+\c@savedliste=\count193
+\c@listf=\count194
+\c@savedlistf=\count195
+\c@location=\count196
+\c@savedlocation=\count197
+\c@organization=\count198
+\c@savedorganization=\count199
+\c@origlocation=\count266
+\c@savedoriglocation=\count267
+\c@origpublisher=\count268
+\c@savedorigpublisher=\count269
+\c@publisher=\count270
+\c@savedpublisher=\count271
+\c@language=\count272
+\c@savedlanguage=\count273
+\c@origlanguage=\count274
+\c@savedoriglanguage=\count275
+\c@pageref=\count276
+\c@savedpageref=\count277
 \shorthandwidth=\skip51
 \shortjournalwidth=\skip52
 \shortserieswidth=\skip53
@@ -238,43 +254,46 @@ Package biblatex Info: ... file 'biblatex.def' found.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/biblatex.def
 File: biblatex.def 2018/11/02 v3.12 biblatex compatibility (PK/MW)
-\c@textcitecount=\count268
-\c@textcitetotal=\count269
-\c@textcitemaxnames=\count270
-\c@biburlnumpenalty=\count271
-\c@biburlucpenalty=\count272
-\c@biburllcpenalty=\count273
-\c@smartand=\count274
+\c@textcitecount=\count278
+\c@textcitetotal=\count279
+\c@textcitemaxnames=\count280
+\c@biburlnumpenalty=\count281
+\c@biburlucpenalty=\count282
+\c@biburllcpenalty=\count283
+\c@smartand=\count284
 )
-Package biblatex Info: Trying to load bibliography style 'numeric'...
-Package biblatex Info: ... file 'numeric.bbx' found.
+Package biblatex Info: Trying to load bibliography style 'apa'...
+Package biblatex Info: ... file 'apa.bbx' found.
 
-(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/bbx/numeric.bbx
-File: numeric.bbx 2018/11/02 v3.12 biblatex bibliography style (PK/MW)
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex-apa/apa.bbx
+File: apa.bbx 2018/04/02 v7.7 APA biblatex references style
 Package biblatex Info: Trying to load bibliography style 'standard'...
 Package biblatex Info: ... file 'standard.bbx' found.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/bbx/standard.bbx
 File: standard.bbx 2018/11/02 v3.12 biblatex bibliography style (PK/MW)
-\c@bbx:relatedcount=\count275
-\c@bbx:relatedtotal=\count276
+\c@bbx:relatedcount=\count285
+\c@bbx:relatedtotal=\count286
 ))
-Package biblatex Info: Trying to load citation style 'numeric'...
-Package biblatex Info: ... file 'numeric.cbx' found.
+Package biblatex Info: Trying to load citation style 'apa'...
+Package biblatex Info: ... file 'apa.cbx' found.
 
-(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/cbx/numeric.cbx
-File: numeric.cbx 2018/11/02 v3.12 biblatex citation style (PK/MW)
-Package biblatex Info: Redefining '\cite'.
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex-apa/apa.cbx
+File: apa.cbx 2018/04/02 v7.7 APA biblatex citation style
+Package biblatex Info: Delimiter 'nameyeardelim' in context '' already defined,
+ overwriting.
+Package biblatex Info: Delimiter 'nameyeardelim' in context 'textcite' already 
+defined, overwriting.
+Package biblatex Info: Delimiter 'andothersdelim' in context '' already defined
+, overwriting.
 Package biblatex Info: Redefining '\parencite'.
+Package biblatex Info: Redefining '\fullcite'.
+Package biblatex Info: Redefining '\citeyear'.
+Package biblatex Info: Redefining '\cite'.
 Package biblatex Info: Redefining '\footcite'.
-Package biblatex Info: Redefining '\footcitetext'.
-Package biblatex Info: Redefining '\smartcite'.
-Package biblatex Info: Redefining '\supercite'.
-Package biblatex Info: Redefining '\textcite'.
 Package biblatex Info: Redefining '\textcites'.
-Package biblatex Info: Redefining '\cites'.
-Package biblatex Info: Redefining '\parencites'.
-Package biblatex Info: Redefining '\smartcites'.
+Package biblatex Info: Redefining '\textcite'.
+Package biblatex Info: Redefining '\citeauthor'.
 )
 Package biblatex Info: Trying to load configuration file...
 Package biblatex Info: ... file 'biblatex.cfg' found.
@@ -282,14 +301,35 @@ Package biblatex Info: ... file 'biblatex.cfg' found.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/biblatex.cfg
 File: biblatex.cfg 
 ))
+Package biblatex Info: Trying to load language 'english' -> 'english-apa'...
+Package biblatex Info: ... file 'english-apa.lbx' found.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex-apa/english-apa.lbx
+File: english-apa.lbx 2018/04/02 v7.7 APA biblatex localisation
 Package biblatex Info: Trying to load language 'english'...
 Package biblatex Info: ... file 'english.lbx' found.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/lbx/english.lbx
 File: english.lbx 2018/11/02 v3.12 biblatex localization (PK/MW)
 )
-\@quotelevel=\count277
-\@quotereset=\count278
+Package biblatex Info: Trying to load language 'american' -> 'american-apa'...
+Package biblatex Info: ... file 'american-apa.lbx' found.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex-apa/american-apa.lbx
+File: american-apa.lbx 2018/04/02 v7.7 APA biblatex localisation
+Package biblatex Info: Trying to load language 'american'...
+Package biblatex Info: ... file 'american.lbx' found.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/lbx/american.lbx
+File: american.lbx 2018/11/02 v3.12 biblatex localization (PK/MW)
+Package biblatex Info: Trying to load language 'english'...
+Package biblatex Info: ... file 'english.lbx' found.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/biblatex/lbx/english.lbx
+File: english.lbx 2018/11/02 v3.12 biblatex localization (PK/MW)
+))))
+\@quotelevel=\count287
+\@quotereset=\count288
 
 (./main.aux)
 \openout1 = `main.aux'.
@@ -325,16 +365,16 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 7265 strings out of 492616
- 134059 string characters out of 6128967
- 547794 words of memory out of 5000000
- 11175 multiletter control sequences out of 15000+600000
+ 7624 strings out of 492616
+ 141805 string characters out of 6128967
+ 597488 words of memory out of 5000000
+ 11520 multiletter control sequences out of 15000+600000
  4245 words of font info for 16 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 35i,4n,45p,793b,1564s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 47i,4n,57p,793b,3866s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 ></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on main.pdf (1 page, 23761 bytes).
+Output written on main.pdf (1 page, 22802 bytes).
 PDF statistics:
  16 PDF objects out of 1000 (max. 8388607)
  10 compressed objects within 1 object stream

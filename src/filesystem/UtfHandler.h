@@ -19,9 +19,11 @@ public:
 
     // All I ever wanted... why is C++ so verbose ^^^ and inflexible :(
 
-    u16string utf8to16 (string &input);
+    u16string utf8to16 (const string &input);
 
     string utf16to8 (u16string &input);
+
+    string utf16to8 (const u16string &input);
 };
 
 #endif //LATEX_LANGUAGE_SERVER_UTFHANDLER_H

@@ -31,11 +31,9 @@ GlobalConfig *g_config;
 int main (int argc, char** argv, const char** env) {
     std::cerr << "Running latex-language-server...\n";
 
+    std::cerr << sizeof(unordered_map<u16string, Style::Entry>) << "\n";
+
     g_config = new GlobalConfig();
-
-    TSParser *parser = ts_parser_new();
-
-    ts_parser_set_language(parser, tree_sitter_biber());
 
     FileManager::init();
     QueueManager::init();

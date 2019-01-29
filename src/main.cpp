@@ -52,6 +52,8 @@ int main (int argc, char** argv, const char** env) {
 
     delete [] cstr;
 
+    std::cerr << "constructed\n";
+
 
 
     auto messageHandler = new MessageHandler();

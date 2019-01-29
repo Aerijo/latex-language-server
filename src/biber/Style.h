@@ -31,51 +31,37 @@ using namespace rapidxml;
 
 namespace Style {
 
-enum class ConstantType {
+enum class Type {
     String,
     List
 };
 
 // TODO: Use vector of u16string when `List` type
 struct Constant {
-    ConstantType type { ConstantType::String };
+    enum class Type {
+        String,
+        List
+    } type { Type::String };
+
     u16string value {};
 };
 
 struct ConditionalConstraint {
-};
+    enum class Quant {
+        All,
+        One,
+        None
+    };
 
-enum class FieldType {
-    Field,
-    List,
-    Other
-};
+    struct {
+        Quant condition { Quant::All };
+        vector<u16string> fields {};
+    } pre {};
 
-enum class DataType {
-    Literal,
-    Name,
-    Key,
-    EntryKey,
-    Date,
-    Verbatim,
-    Integer,
-    Range,
-    Code,
-    URI,
-    Datepart,
-    Keyword,
-    Option,
-
-    // These are not declared in the schema
-    SeparatedValue,
-    Pattern,
-    Other
-};
-
-enum class Format {
-    Unspecified,
-    XSV,
-    Other,
+    struct {
+        Quant condition { Quant::All };
+        vector<u16string> fields {};
+    } post {};
 };
 
 struct Field {
@@ -83,13 +69,71 @@ struct Field {
 
     u16string name {};
 
-    FieldType type { FieldType::Other };
-    Format format { Format::Unspecified };
-    DataType dataType { DataType::Other };
+    enum class Type {
+        Field,
+        List
+    } type { Type::Field };
+
+    enum class Format {
+        Unspecified,
+        XSV,
+        Other,
+    } format { Format::Unspecified };
+
+    enum class Data {
+        Literal,
+        Name,
+        Key,
+        EntryKey,
+        Date,
+        Verbatim,
+        Integer,
+        Range,
+        Code,
+        URI,
+        Datepart,
+        Keyword,
+        Option,
+    } dataType { Data::Literal };
 
     bool nullok { false };
     bool skipout { false };
     bool label { false };
+
+    enum class ConstraintType {
+        None,
+        Integer,
+        Isbn,
+        Issn,
+        Ismn,
+        Datepart,
+        Pattern
+    } constraintType { ConstraintType::None };
+
+    int rangeMax {};
+    int rangeMin {};
+    string pattern; // TODO: make regex object
+};
+
+struct DataConstraint {
+    vector<u16string> fields {};
+    Field::ConstraintType type { Field::ConstraintType::None };
+    int rangeMin { 0 };
+    int rangeMax { 0 };
+    string pattern {}; // TODO: make regex object
+};
+
+struct MandatoryConstraint {
+    vector<u16string> all {};
+    vector<vector<u16string>> some {};
+    vector<vector<u16string>> one {};
+};
+
+struct TempConstraintData {
+    vector<u16string> entries {};
+    vector<MandatoryConstraint> mandatory {};
+    vector<ConditionalConstraint> conditional {};
+    vector<DataConstraint> data {};
 };
 
 std::ostream & operator << (std::ostream &out, const Field &field);
@@ -98,10 +142,10 @@ struct Entry {
     explicit Entry (u16string &name, bool skipOut = false) : name { name }, skipOut { skipOut } {}
 
     u16string name {};
-    unordered_map<u16string, Field *> fields {};
+    unordered_map<u16string, Field> fields {};
     bool skipOut { false };
 
-    struct {
+    struct Constraints {
         vector<u16string> all {};
         vector<vector<u16string>> some {};
         vector<vector<u16string>> one {};
@@ -119,25 +163,17 @@ private:
 
     unordered_map<u16string, Entry> entries;
 
-    unordered_map<u16string, Field> fields;
-
-    void parseDatamodel (xml_node<> *datamodel, vector<xml_node<> *> &, vector<u16string> &, map<u16string, vector<u16string>> &);
+    void parseDatamodel (xml_node<> *datamodel, vector<TempConstraintData> & tempConstraints, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields);
 
     void parseConstants (xml_node<> *def);
 
     void parseEntryTypes (xml_node<> *def);
 
-    void parseFields (xml_node<> *def);
+    void parseFields (xml_node<> *def, unordered_map<u16string, Field> &fields);
 
-    void parseEntryFields (xml_node<> *def, vector<u16string> &universalFields, map<u16string, vector<u16string>> &entryFields);
+    void parseEntryFields (xml_node<> *def, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields);
 
-    void parseConstraints (xml_node<> *def, vector<xml_node<> *> &constraints);
-
-    void processEntries ();
-
-    void processFields ();
-
-    void processConstraints ();
+    void parseConstraints (xml_node<> *def, vector<TempConstraintData> &tempConstraints);
 
 public:
     explicit Style (xml_document<> &doc);
@@ -145,10 +181,6 @@ public:
     optional<Entry> getEntry (u16string &name);
 
     optional<Field> getField (u16string &name);
-
-    void addEntry (Entry &&entry);
-
-    void addField (Field &&field);
 };
 
 } // namespace Style

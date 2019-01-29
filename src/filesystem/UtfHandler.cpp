@@ -12,14 +12,6 @@ u16string UtfHandler::utf8to16 (const string &input) {
     }
 }
 
-string UtfHandler::utf16to8 (u16string &input) {
-    try {
-        return converter.to_bytes(input);
-    } catch (...) {
-        return "FAILED :(";
-    }
-}
-
 string UtfHandler::utf16to8 (const u16string &input) {
     try {
         return converter.to_bytes(input);

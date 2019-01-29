@@ -3,6 +3,10 @@
 
 #include <cstring>
 
+namespace {
+    UtfHandler utf {};
+}
+
 namespace Style {
 
 using std::strcmp;
@@ -19,6 +23,10 @@ using std::strcmp;
  *      for things like hover (so it shows what the final field will look like).
  *  - The datamodel does not account for mapped from entries, like phdthesis. So we
  *      need to be careful about when and how we handle maps.
+ *  - Date fields must end with "date" (fatal error!)
+ *
+ * TODO:
+ *  - Add in config file support too (this file can extend the datamodel)
  *
  * (Handled) Types of Map:
  * - map_type_source -> map_type_target (entry rename; create pseudo entry in style)
@@ -30,98 +38,81 @@ using std::strcmp;
 #define EXPECT_NAME(node, input) assert(strcmp(node->name(), input) == 0)
 #define EXPECT_VAL(node, input) assert(strcmp(node->value(), input) == 0)
 
-std::ostream & operator << (std::ostream &out, const Field &field) {
-    UtfHandler utf {};
-
-    out
-    << utf.utf16to8(field.name) << ": "
-    << (int) field.type << ", "
-    << (int) field.format << ", "
-    << (int) field.dataType << ", "
-    << field.nullok << ", "
-    << field.skipout << ", "
-    << field.label;
-
+std::ostream &operator << (std::ostream &out, const Field &field) {
+    out << utf.utf16to8(field.name);
     return out;
 }
 
-std::ostream & operator << (std::ostream &out, const u16string &input) {
-    UtfHandler utf{};
+std::ostream &operator << (std::ostream &out, const u16string &input) {
     out << utf.utf16to8(input);
     return out;
 }
 
+template <typename T>
+std::ostream &operator << (std::ostream &out, const vector<T> &input) {
+    out << "[";
+    for (const auto &entry : input) {
+        out << entry << ", ";
+    }
+    if (!input.empty()) out << "\b\b";
+    out << "]";
+    return out;
+}
+
+template <typename K, typename V>
+std::ostream &operator << (std::ostream &out, const unordered_map<K, V> &input) {
+    out << "<";
+    for (auto &pair : input) {
+        out << pair.first << ": " << pair.second << ", ";
+    }
+    if (!input.empty()) out << "\b\b";
+    out << ">";
+    return out;
+}
+
+std::ostream &operator << (std::ostream &out, const Entry &input) {
+    out << ":" << input.name << " F=" << input.fields.size() << " C=" << input.constraints.all.size() << "-" << input.constraints.some.size() << "-" << input.constraints.one.size() <<  ":";
+    return out;
+}
+
+void applyGlobalDataConstraints (unordered_map<u16string, Field> &fields, vector<TempConstraintData> &tempConstraints) {
+//    for (const TempConstraintData &tempConstraint : tempConstraints) {
+//        if (tempConstraint.data.empty() || !tempConstraint.entries.empty()) continue;
+//
+//
+//
+//        for (const u16string &fieldName : tempConstraint.fields) {
+//            auto itr = fields.find(fieldName);
+//            if (itr == fields.end()) continue; // TODO: Handle missing field
+//            Field &field = itr->second;
+//
+//
+//        }
+//    }
+}
+
 Style::Style (xml_document<> &doc) {
     std::cerr << "constructing Style from xml...\n";
-
     EXPECT_NAME(doc.first_node(), "bcf:controlfile");
-
     // NOTE: bcf:options component="biber" contains encoding information.
     //  We will assume it's always UTF-8 for now.
 
-    vector<xml_node<> *> options;
-    vector<xml_node<> *> optionScope;
-    vector<xml_node<> *> dataFieldSet;
-    vector<xml_node<> *> sourceMap;
-    vector<xml_node<> *> inheritance;
-    vector<xml_node<> *> datamodel;
-
-    // from datamodel
-    vector<xml_node<> *> constraints;
-
-    // processed
-    vector<u16string> universalFields;
-    map<u16string, vector<u16string>> entryFields;
+    vector<TempConstraintData> tempConstraints {};
+    vector<u16string> universalFields {};
+    unordered_map<u16string, vector<u16string>> entryFields {};
+    unordered_map<u16string, Field> fields {};
 
     for (xml_node<> *node = doc.first_node()->first_node(); node; node = node->next_sibling()) {
         const char *name = node->name();
-
-        if (IS("options")) {
-            options.push_back(node);
-        } else if (IS("optionscope")) {
-            optionScope.push_back(node);
-        } else if (IS("datafieldset")) {
-            dataFieldSet.push_back(node);
-        } else if (IS("sourcemap")) {
-            sourceMap.push_back(node);
-        } else if (IS("inheritance")) {
-            inheritance.push_back(node);
-        } else if (IS("datamodel")) {
-            parseDatamodel(node, constraints, universalFields, entryFields);
+         if (IS("datamodel")) {
+            parseDatamodel(node, tempConstraints, universalFields, entryFields, fields);
         }
-
     }
 
-
-    // NOTE: Printing out all the gathered data:
-    std::cerr << "Fields: ";
-    for (const auto &field : universalFields) {
-        std::cerr << field << ", ";
-    }
-    std::cerr << "\b\b\n\n";
-
-    std::cerr << "Entry fields:\n";
-    for (const auto &pair : entryFields) {
-        std::cerr << "- " << pair.first << ": ";
-        for (auto &f : pair.second) {
-            std::cerr << f << ", ";
-        }
-        std::cerr << "\b\b\n";
-    }
-
-    std::cerr << "Fields:\n";
-    for (const auto &pair : fields) {
-        std::cerr << pair.second << "\n";
-    }
-    std::cerr << "\n";
-
-    std::cerr << "Constants:\n";
-    for (const auto &pair : constants) {
-        std::cerr << pair.first << ": " << (int) pair.second.type << ", " << pair.second.value << "\n";
-    }
+    applyGlobalDataConstraints(fields, tempConstraints);
 }
 
-void Style::parseDatamodel (xml_node<> *datamodel, vector<xml_node<> *> &constraints, vector<u16string> &universalFields, map<u16string, vector<u16string>> &entryFields) {
+void Style::parseDatamodel (xml_node<> *datamodel, vector<TempConstraintData> &tempConstraints, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields) {
     for (xml_node<> *node = datamodel->first_node(); node; node = node->next_sibling()) {
         const char *name = node->name();
 
@@ -130,11 +121,11 @@ void Style::parseDatamodel (xml_node<> *datamodel, vector<xml_node<> *> &constra
         } else if (IS("entrytypes")) {
             parseEntryTypes(node);
         } else if (IS("fields")) {
-            parseFields(node);
+            parseFields(node, fields);
         } else if (IS("entryfields")) {
             parseEntryFields(node, universalFields, entryFields);
         } else if (IS("constraints")) {
-            parseConstraints(node, constraints);
+            parseConstraints(node, tempConstraints);
         } else {
             std::cerr << "Unhandled datamodel entry " << name << "\n";
         }
@@ -155,7 +146,7 @@ void Style::parseConstants (xml_node<> *def) {
             u16string attrValue = utf.utf8to16(attr->value());
 
             if (attrName == "type") {
-                if (attrValue == u"list") constant.type = ConstantType::List;
+                if (attrValue == u"list") constant.type = Constant::Type::List;
                 // it is `string` by default
             } else {
                 EXPECT_NAME(attr, "name");
@@ -187,7 +178,7 @@ void Style::parseEntryTypes (xml_node<> *def) {
     }
 }
 
-void Style::parseFields (xml_node<> *def) {
+void Style::parseFields (xml_node<> *def, unordered_map<u16string, Field> &fields) {
     for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
         EXPECT_NAME(node, "bcf:field");
 
@@ -200,53 +191,51 @@ void Style::parseFields (xml_node<> *def) {
 
             if (attrName == "fieldtype") {
                 if (attrVal == "field") {
-                    field.type = FieldType::Field;
+                    field.type = Field::Type::Field;
                 } else {
                     assert(attrVal == "list");
-                    field.type = FieldType::List;
+                    field.type = Field::Type::List;
                 }
             } else if (attrName == "datatype") {
                 if (attrVal == "literal") {
-                    field.dataType = DataType::Literal;
+                    field.dataType = Field::Data::Literal;
                 } else if (attrVal == "name") {
-                    field.dataType = DataType::Name;
-                } else if (attrVal == "range") {
-                    field.dataType = DataType::Range;
-                } else if (attrVal == "integer") {
-                    field.dataType = DataType::Integer;
-                } else if (attrVal == "datepart") {
-                    field.dataType = DataType::Datepart;
-                } else if (attrVal == "date") {
-                    field.dataType = DataType::Date;
-                } else if (attrVal == "verbatim") {
-                    field.dataType = DataType::Verbatim;
-                } else if (attrVal == "uri") {
-                    field.dataType = DataType::URI;
-                } else if (attrVal == "separatedvalue") { // TODO: Find any usage of this...
-                    field.dataType = DataType::SeparatedValue;
+                    field.dataType = Field::Data::Name;
                 } else if (attrVal == "key") {
-                    field.dataType = DataType::Key;
+                    field.dataType = Field::Data::Key;
                 } else if (attrVal == "entrykey") {
-                    field.dataType = DataType::EntryKey;
-                } else if (attrVal == "keyword") {
-                    field.dataType = DataType::Keyword;
-                } else if (attrVal == "option") {
-                    field.dataType = DataType::Option;
+                    field.dataType = Field::Data::EntryKey;
+                } else if (attrVal == "date") {
+                    field.dataType = Field::Data::Date;
+                } else if (attrVal == "verbatim") {
+                    field.dataType = Field::Data::Verbatim;
+                } else if (attrVal == "integer") {
+                    field.dataType = Field::Data::Integer;
+                } else if (attrVal == "range") {
+                    field.dataType = Field::Data::Range;
                 } else if (attrVal == "code") {
-                    field.dataType = DataType::Code;
-                } else if (attrVal == "pattern") {
-                    field.dataType = DataType::Pattern;
+                    field.dataType = Field::Data::Code;
+                } else if (attrVal == "uri") {
+                    field.dataType = Field::Data::URI;
+                } else if (attrVal == "datepart") {
+                    field.dataType = Field::Data::Datepart;
+                } else if (attrVal == "keyword") {
+                    field.dataType = Field::Data::Keyword;
+                } else if (attrVal == "option") {
+                    field.dataType = Field::Data::Option;
                 } else {
                     std::cerr << "Unhandled datatype " << attrVal << "\n";
                 }
             } else if (attrName == "format") {
                 if (attrVal == "xsv") {
-                    field.format = Format::XSV;
+                    field.format = Field::Format::XSV;
                 } else {
                     std::cerr << "Unhandled format " << attrVal << "\n";
-                    field.format = Format::Other;
+                    field.format = Field::Format::Other;
                 }
             } else if (attrName == "nullok") {
+                // NOTE: Technically the schema does not allow any other value besides "true",
+                //  so the check is useless
                 if (attrVal == "true") field.nullok = true;
             } else if (attrName == "skip_out") {
                 if (attrVal == "true") field.skipout = true;
@@ -259,7 +248,7 @@ void Style::parseFields (xml_node<> *def) {
     }
 }
 
-void Style::parseEntryFields (xml_node<> *def, vector<u16string> &universalFields, map<u16string, vector<u16string>> &entryFields) {
+void Style::parseEntryFields (xml_node<> *def, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields) {
     vector<u16string> entryNames {};
     vector<u16string> fields {};
 
@@ -283,10 +272,136 @@ void Style::parseEntryFields (xml_node<> *def, vector<u16string> &universalField
     }
 }
 
-void Style::parseConstraints (xml_node<> *def, vector<xml_node<> *> &constraints) {
-    for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
-        constraints.push_back(node);
+void addMandatoryConstraint (TempConstraintData &data, xml_node<> *node) {
+    EXPECT_NAME(node, "bcf:constraint");
+    UtfHandler utf {};
+
+    MandatoryConstraint &mandatory = data.mandatory.emplace_back(MandatoryConstraint {});
+
+    for (xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
+        const char *name = child->name();
+
+        if (IS("field")) {
+            mandatory.all.emplace_back(UtfHandler().utf8to16(child->value()));
+        } else if (IS("fieldor")) {
+            vector<u16string> &fields = mandatory.some.emplace_back(vector<u16string> {});
+            for (xml_node<> *field = child->first_node(); field; field = field->next_sibling()) {
+                fields.emplace_back(utf.utf8to16(child->value()));
+            }
+
+        } else {
+            assert(IS("fieldxor"));
+            vector<u16string> &fields = mandatory.one.emplace_back(vector<u16string> {});
+            for (xml_node<> *field = child->first_node(); field; field = field->next_sibling()) {
+                fields.emplace_back(utf.utf8to16(child->value()));
+            }
+        }
     }
+}
+
+void addConditionalConstraint (TempConstraintData &data, xml_node<> *node) {
+    UtfHandler utf {};
+    ConditionalConstraint &conditional = data.conditional.emplace_back(ConditionalConstraint {});
+
+    for (xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
+        string attrVal = child->first_attribute()->value(); // TODO: Check and don't segfault on this
+
+        ConditionalConstraint::Quant quant;
+
+        if (attrVal == "all") {
+            quant = ConditionalConstraint::Quant::All;
+        } else if (attrVal == "one") {
+            quant = ConditionalConstraint::Quant::One;
+        } else {
+            assert(attrVal == "none");
+            quant = ConditionalConstraint::Quant::None;
+        }
+
+        vector<u16string> fields {};
+
+        for (xml_node<> *field = child->first_node(); field; field = field->next_sibling()) {
+            fields.emplace_back(utf.utf8to16(field->value()));
+        }
+
+        const char *name = child->name();
+        if (IS("antecedent")) {
+            conditional.pre.condition = quant;
+            conditional.pre.fields = fields;
+        } else {
+            conditional.post.condition = quant;
+            conditional.post.fields = fields;
+        }
+    }
+
+    data.conditional.emplace_back(conditional);
+}
+
+void addDataConstraint (TempConstraintData &tempConstraint, xml_node<> *node) {
+    DataConstraint &data = tempConstraint.data.emplace_back(DataConstraint {});
+
+    for (xml_attribute<> *attr = node->first_attribute(); attr; attr = attr->next_attribute()) {
+        string name = attr->name();
+        string val = attr->value();
+        if (name == "datatype") {
+            if (val == "integer") {
+                data.type = Field::ConstraintType::Integer;
+            } else if (val == "isbn") {
+                data.type = Field::ConstraintType::Isbn;
+            } else if (val == "issn") {
+                data.type = Field::ConstraintType::Issn;
+            } else if (val == "ismn") {
+                data.type = Field::ConstraintType::Ismn;
+            } else if (val == "datepart") { // "date" is not actually a valid constraint (fixed in dev)
+                data.type = Field::ConstraintType::Datepart;
+            } else if (val == "pattern") {
+                data.type = Field::ConstraintType::Pattern;
+            }
+        } else if (name == "rangemax") {
+            data.rangeMax = std::stoi(val);
+        } else if (name == "rangemin") {
+            data.rangeMin = std::stoi(val);
+        } else if (name == "pattern") {
+            data.pattern = val;
+        } else {
+            assert(name == "type");
+        }
+    }
+
+    for (xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
+        data.fields.emplace_back(utf.utf8to16(child->value()));
+    }
+}
+
+void Style::parseConstraints (xml_node<> *def, vector<TempConstraintData> &constraints) {
+    EXPECT_NAME(def, "bcf:constraints");
+
+    TempConstraintData data {};
+
+    for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
+        const char *name = node->name();
+        if (IS("entrytype")) {
+            data.entries.emplace_back(utf.utf8to16(node->value()));
+        } else {
+            EXPECT_NAME(node, "bcf:constraint");
+            auto *attr = node->first_attribute();
+            assert(attr != nullptr);
+
+            string attrVal = attr->value();
+
+            // Note: These values can only appear in the separate types, so
+            //  we don't need to check the attribute name (data is the fallback)
+            if (attrVal == "mandatory") {
+                addMandatoryConstraint(data, node);
+            } else if (attrVal == "conditional") {
+                addConditionalConstraint(data, node);
+            } else {
+                assert(attrVal == "data");
+                addDataConstraint(data, node);
+            }
+        }
+    }
+
+    constraints.emplace_back(data);
 }
 
 #undef EXPECT_VAL

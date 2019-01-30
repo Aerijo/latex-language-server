@@ -17,8 +17,6 @@ private:
 public:
     UtfHandler () = default;
 
-    // All I ever wanted... why is C++ so verbose ^^^ and inflexible :(
-
     u16string utf8to16 (const string &input);
 
     string utf16to8 (const u16string &input);

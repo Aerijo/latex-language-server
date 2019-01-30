@@ -1,9 +1,9 @@
 #ifndef LATEX_LANGUAGE_SERVER_STYLE_H
 #define LATEX_LANGUAGE_SERVER_STYLE_H
 
-#include <map>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <optional.h>
 #include <rapidxml.hpp>
 #include <vector>
@@ -21,7 +21,7 @@
  *  - Check contraints
  */
 
-using std::map;
+using std::unordered_set;
 using std::string;
 using std::vector;
 using std::u16string;
@@ -30,11 +30,6 @@ using std::unordered_map;
 using namespace rapidxml;
 
 namespace Style {
-
-enum class Type {
-    String,
-    List
-};
 
 // TODO: Use vector of u16string when `List` type
 struct Constant {
@@ -65,6 +60,8 @@ struct ConditionalConstraint {
 };
 
 struct Field {
+    Field () = delete;
+
     explicit Field (u16string &name) : name { name } {};
 
     u16string name {};
@@ -116,7 +113,7 @@ struct Field {
 };
 
 struct DataConstraint {
-    vector<u16string> fields {};
+    unordered_set<u16string> fields {};
     Field::ConstraintType type { Field::ConstraintType::None };
     int rangeMin { 0 };
     int rangeMax { 0 };
@@ -124,14 +121,14 @@ struct DataConstraint {
 };
 
 struct MandatoryConstraint {
-    vector<u16string> all {};
+    unordered_set<u16string> all {};
     vector<vector<u16string>> some {};
     vector<vector<u16string>> one {};
 };
 
-struct TempConstraintData {
-    vector<u16string> entries {};
-    vector<MandatoryConstraint> mandatory {};
+struct TempConstraintData { // one of these per "bcf:constraints". Each can hold multiple "bcf:constraint"
+    unordered_set<u16string> entries {};
+    MandatoryConstraint mandatory {}; // Technically can have multiple inside a single "bcf:constraints", but are equivalent to a single one when merged
     vector<ConditionalConstraint> conditional {};
     vector<DataConstraint> data {};
 };
@@ -139,6 +136,8 @@ struct TempConstraintData {
 std::ostream & operator << (std::ostream &out, const Field &field);
 
 struct Entry {
+    Entry () = delete;
+
     explicit Entry (u16string &name, bool skipOut = false) : name { name }, skipOut { skipOut } {}
 
     u16string name {};
@@ -155,6 +154,8 @@ struct Entry {
 
 class Style {
 private:
+    bool loaded { false };
+
     UtfHandler utf {};
 
     string name {};
@@ -162,6 +163,8 @@ private:
     unordered_map<u16string, Constant> constants;
 
     unordered_map<u16string, Entry> entries;
+
+    void buildFromXML (xml_document<> &doc);
 
     void parseDatamodel (xml_node<> *datamodel, vector<TempConstraintData> & tempConstraints, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields);
 
@@ -175,13 +178,49 @@ private:
 
     void parseConstraints (xml_node<> *def, vector<TempConstraintData> &tempConstraints);
 
+    void buildEntryFields(vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields);
+
+    void addEntryConstraints(vector<TempConstraintData> &tempConstraints);
+
+    void consolidateEntryConstraints();
+
 public:
+    Style () = default;
+
+    explicit Style (const string &path);
+
     explicit Style (xml_document<> &doc);
 
-    optional<Entry> getEntry (u16string &name);
-
-    optional<Field> getField (u16string &name);
+    std::optional<Entry *> getEntry (const u16string &name);
 };
+
+std::ostream &operator << (std::ostream &out, const Field &field);
+
+std::ostream &operator << (std::ostream &out, const u16string &input);
+
+template<typename T>
+std::ostream &operator << (std::ostream &out, const vector<T> &input) {
+    out << "[";
+    for (const auto &entry : input) {
+        out << entry << ", ";
+    }
+    if (!input.empty()) out << "\b\b";
+    out << "]";
+    return out;
+};
+
+template <typename K, typename V>
+std::ostream &operator << (std::ostream &out, const unordered_map<K, V> &input) {
+    out << "<";
+    for (auto &pair : input) {
+        out << pair.first << ": " << pair.second << ", ";
+    }
+    if (!input.empty()) out << "\b\b";
+    out << ">";
+    return out;
+}
+
+std::ostream &operator << (std::ostream &out, const Entry &input);
 
 } // namespace Style
 

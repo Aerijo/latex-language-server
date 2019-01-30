@@ -26,7 +26,6 @@ void File::setTextInRange (Range oldRange, std::string &&text) {
     setTextInRange(oldRange, utf.utf8to16(text));
 }
 
-
 /*
  *    0   1   2   3   4
  * 0:   a | b | c | \n
@@ -119,6 +118,8 @@ void File::setVersion (versionNum nextVersion) {
 
 void File::setText (std::string &&text) {
     buffer.set_text(utf.utf8to16(text));
+
+
 }
 
 File::~File () {

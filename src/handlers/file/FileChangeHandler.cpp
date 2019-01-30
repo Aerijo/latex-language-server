@@ -1,6 +1,8 @@
 #include <filesystem/File.h>
 #include <filesystem/FileManager.h>
 #include <biber/BibIndexer.h>
+#include <fstream>
+#include <lconfig.h>
 #include "FileChangeHandler.h"
 
 void FileChangeHandler::registerCapabilities (Init::ServerCapabilities &capabilities) {
@@ -13,6 +15,22 @@ void FileChangeHandler::registerCapabilities (Init::ServerCapabilities &capabili
     capabilities.textDocumentSync->willSave = true;
 
     capabilities.textDocumentSync->willSaveWaitUntil = false;
+}
+
+optional<string> findBiberDataModel () {
+    return optional { std::string { "../test/resources/project1/main.bcf" } };
+}
+
+Range getRangeFromJSON (Value &range) {
+    Value &start = range["start"];
+    Value &end = range["end"];
+
+    unsigned startLine = start["line"].GetUint();
+    unsigned startChar = start["character"].GetUint();
+    unsigned endLine = end["line"].GetUint();
+    unsigned endChar = end["character"].GetUint();
+
+    return Range { { startLine, startChar }, { endLine, endChar } };
 }
 
 void FileChangeHandler::run (optional<Value> &params) {
@@ -53,15 +71,7 @@ void FileChangeHandler::run (optional<Value> &params) {
 
         if (change.HasMember("range")) {
             Value &range = change["range"];
-            Value &start = range["start"];
-            Value &end = range["end"];
-
-            unsigned startLine = start["line"].GetUint();
-            unsigned startChar = start["character"].GetUint();
-            unsigned endLine = end["line"].GetUint();
-            unsigned endChar = end["character"].GetUint();
-
-            file->setTextInRange({{ startLine, startChar }, { endLine, endChar }}, std::move(text));
+            file->setTextInRange(getRangeFromJSON(range), std::move(text));
         } else {
             text = change["text"].GetString();
             file->setText(std::move(text));
@@ -69,9 +79,13 @@ void FileChangeHandler::run (optional<Value> &params) {
     }
 
     if (file->hasParser) {
-        BibIndexer indexer { file };
+        auto datamodel = findBiberDataModel();
 
-        indexer.completeIndex();
+        if (datamodel) {
+            BibIndexer indexer { file, g_config->bibtex.style };
+
+            indexer.completeIndex();
+        }
     }
 }
 

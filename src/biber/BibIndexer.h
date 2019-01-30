@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <filesystem/File.h>
+#include "Style.h"
 
 using std::u16string;
 using std::vector;
@@ -15,15 +16,16 @@ enum class Severity {
     Hint = 4
 };
 
-enum Error {
-    Generic
+enum class Error {
+    Generic,
+    Entry
 };
 
-enum Warning {
+enum class Warning {
 
 };
 
-enum Info {
+enum class Info {
 
 };
 
@@ -75,10 +77,12 @@ private:
 
     vector<BibIndexString> strings;
 
-public:
-    BibIndexer () = default;
+    Style::Style *style { nullptr };
 
-    explicit BibIndexer (File *file) : file (file) {};
+public:
+    BibIndexer () = delete;
+
+    explicit BibIndexer (File *file, Style::Style *style) : file { file }, style { style } {};
 
     void completeIndex ();
 
@@ -92,9 +96,9 @@ public:
 
     void lintErrors (TSNode rootNode);
 
-    void lintFile ();
+    void lintFile (TSNode rootNode);
 
-    void lintEntry (TSNode entry);
+    void lintEntry (TSNode &entry);
 
     void lintComment ();
 };

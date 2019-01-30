@@ -1,9 +1,10 @@
 #ifndef LATEX_LANGUAGE_SERVER_CONFIG_H
 #define LATEX_LANGUAGE_SERVER_CONFIG_H
 
-//#include <optional>
 #include <string>
 #include <vector>
+
+#include "biber/Style.h"
 
 #include <rapidjson/document.h>
 
@@ -304,11 +305,20 @@ namespace LConfig {
 
     };
 
+    struct BibConfig {
+        Style::Style *style { nullptr };
+    };
+
 }; // end namespace Config
 
 struct GlobalConfig {
     LConfig::LspConfig lsp {};
     LConfig::LatexConfig latex {};
+    LConfig::BibConfig bibtex {};
+
+    ~GlobalConfig () {
+        delete bibtex.style;
+    }
 };
 
 extern GlobalConfig *g_config;

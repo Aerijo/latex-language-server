@@ -2,6 +2,9 @@
 #include "Style.h"
 
 #include <cstring>
+#include <fstream>
+
+#define CONSOLIDATE_CONSTRAINTS (true)
 
 namespace {
     UtfHandler utf {};
@@ -48,50 +51,35 @@ std::ostream &operator << (std::ostream &out, const u16string &input) {
     return out;
 }
 
-template <typename T>
-std::ostream &operator << (std::ostream &out, const vector<T> &input) {
-    out << "[";
-    for (const auto &entry : input) {
-        out << entry << ", ";
-    }
-    if (!input.empty()) out << "\b\b";
-    out << "]";
-    return out;
-}
-
-template <typename K, typename V>
-std::ostream &operator << (std::ostream &out, const unordered_map<K, V> &input) {
-    out << "<";
-    for (auto &pair : input) {
-        out << pair.first << ": " << pair.second << ", ";
-    }
-    if (!input.empty()) out << "\b\b";
-    out << ">";
-    return out;
-}
-
 std::ostream &operator << (std::ostream &out, const Entry &input) {
     out << ":" << input.name << " F=" << input.fields.size() << " C=" << input.constraints.all.size() << "-" << input.constraints.some.size() << "-" << input.constraints.one.size() <<  ":";
     return out;
 }
 
 void applyGlobalDataConstraints (unordered_map<u16string, Field> &fields, vector<TempConstraintData> &tempConstraints) {
-//    for (const TempConstraintData &tempConstraint : tempConstraints) {
-//        if (tempConstraint.data.empty() || !tempConstraint.entries.empty()) continue;
-//
-//
-//
-//        for (const u16string &fieldName : tempConstraint.fields) {
-//            auto itr = fields.find(fieldName);
-//            if (itr == fields.end()) continue; // TODO: Handle missing field
-//            Field &field = itr->second;
-//
-//
-//        }
-//    }
+    // TODO
+}
+
+void getDatamodelXML (const string &path, xml_document<> &doc) {
+    std::ifstream infile { path };
+    string file_contents { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+
+    char* cstr = new char[file_contents.size() + 1];  // Create char buffer to store string copy
+    strcpy (cstr, file_contents.c_str());
+    doc.parse<0>(cstr);
+}
+
+Style::Style (const string &path) {
+    xml_document<> doc;
+    getDatamodelXML(path, doc);
+    buildFromXML(doc);
 }
 
 Style::Style (xml_document<> &doc) {
+    buildFromXML(doc);
+}
+
+void Style::buildFromXML (xml_document<> &doc) {
     std::cerr << "constructing Style from xml...\n";
     EXPECT_NAME(doc.first_node(), "bcf:controlfile");
     // NOTE: bcf:options component="biber" contains encoding information.
@@ -104,15 +92,23 @@ Style::Style (xml_document<> &doc) {
 
     for (xml_node<> *node = doc.first_node()->first_node(); node; node = node->next_sibling()) {
         const char *name = node->name();
-         if (IS("datamodel")) {
+        if (IS("datamodel")) {
             parseDatamodel(node, tempConstraints, universalFields, entryFields, fields);
         }
     }
 
     applyGlobalDataConstraints(fields, tempConstraints);
+
+    buildEntryFields(universalFields, entryFields, fields);
+
+    addEntryConstraints(tempConstraints);
+
+    if (CONSOLIDATE_CONSTRAINTS) consolidateEntryConstraints();
 }
 
 void Style::parseDatamodel (xml_node<> *datamodel, vector<TempConstraintData> &tempConstraints, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields) {
+    EXPECT_NAME(datamodel, "bcf:datamodel");
+
     for (xml_node<> *node = datamodel->first_node(); node; node = node->next_sibling()) {
         const char *name = node->name();
 
@@ -133,6 +129,8 @@ void Style::parseDatamodel (xml_node<> *datamodel, vector<TempConstraintData> &t
 }
 
 void Style::parseConstants (xml_node<> *def) {
+    EXPECT_NAME(def, "bcf:constants");
+
     for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
         EXPECT_NAME(node, "bcf:constant");
 
@@ -143,14 +141,14 @@ void Style::parseConstants (xml_node<> *def) {
 
         for (xml_attribute<> *attr = node->first_attribute(); attr; attr = attr->next_attribute()) {
             string attrName = attr->name();
-            u16string attrValue = utf.utf8to16(attr->value());
+            string attrValue = attr->value();
 
             if (attrName == "type") {
-                if (attrValue == u"list") constant.type = Constant::Type::List;
+                if (attrValue == "list") constant.type = Constant::Type::List;
                 // it is `string` by default
             } else {
                 EXPECT_NAME(attr, "name");
-                name = attrValue;
+                name = utf.utf8to16(attrValue);
             }
         }
 
@@ -272,36 +270,34 @@ void Style::parseEntryFields (xml_node<> *def, vector<u16string> &universalField
     }
 }
 
-void addMandatoryConstraint (TempConstraintData &data, xml_node<> *node) {
+void extractMandatoryConstraint (TempConstraintData &tempConstraint, xml_node<> *node) {
     EXPECT_NAME(node, "bcf:constraint");
-    UtfHandler utf {};
 
-    MandatoryConstraint &mandatory = data.mandatory.emplace_back(MandatoryConstraint {});
+    MandatoryConstraint &mandatory = tempConstraint.mandatory;
 
     for (xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
         const char *name = child->name();
 
         if (IS("field")) {
-            mandatory.all.emplace_back(UtfHandler().utf8to16(child->value()));
+            mandatory.all.insert(utf.utf8to16(child->value()));
         } else if (IS("fieldor")) {
             vector<u16string> &fields = mandatory.some.emplace_back(vector<u16string> {});
             for (xml_node<> *field = child->first_node(); field; field = field->next_sibling()) {
-                fields.emplace_back(utf.utf8to16(child->value()));
+                fields.emplace_back(utf.utf8to16(field->value()));
             }
-
         } else {
             assert(IS("fieldxor"));
             vector<u16string> &fields = mandatory.one.emplace_back(vector<u16string> {});
             for (xml_node<> *field = child->first_node(); field; field = field->next_sibling()) {
-                fields.emplace_back(utf.utf8to16(child->value()));
+                fields.emplace_back(utf.utf8to16(field->value()));
             }
         }
     }
 }
 
-void addConditionalConstraint (TempConstraintData &data, xml_node<> *node) {
-    UtfHandler utf {};
-    ConditionalConstraint &conditional = data.conditional.emplace_back(ConditionalConstraint {});
+void extractConditionalConstraint (TempConstraintData &tempConstraint, xml_node<> *node) {
+    EXPECT_NAME(node, "bcf:constraint");
+    ConditionalConstraint &conditional = tempConstraint.conditional.emplace_back(ConditionalConstraint {});
 
     for (xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
         string attrVal = child->first_attribute()->value(); // TODO: Check and don't segfault on this
@@ -332,11 +328,9 @@ void addConditionalConstraint (TempConstraintData &data, xml_node<> *node) {
             conditional.post.fields = fields;
         }
     }
-
-    data.conditional.emplace_back(conditional);
 }
 
-void addDataConstraint (TempConstraintData &tempConstraint, xml_node<> *node) {
+void extractDataConstraint (TempConstraintData &tempConstraint, xml_node<> *node) {
     DataConstraint &data = tempConstraint.data.emplace_back(DataConstraint {});
 
     for (xml_attribute<> *attr = node->first_attribute(); attr; attr = attr->next_attribute()) {
@@ -368,19 +362,19 @@ void addDataConstraint (TempConstraintData &tempConstraint, xml_node<> *node) {
     }
 
     for (xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
-        data.fields.emplace_back(utf.utf8to16(child->value()));
+        data.fields.insert(utf.utf8to16(child->value()));
     }
 }
 
 void Style::parseConstraints (xml_node<> *def, vector<TempConstraintData> &constraints) {
     EXPECT_NAME(def, "bcf:constraints");
 
-    TempConstraintData data {};
+    TempConstraintData &tempConstraint = constraints.emplace_back(TempConstraintData {});
 
     for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
         const char *name = node->name();
         if (IS("entrytype")) {
-            data.entries.emplace_back(utf.utf8to16(node->value()));
+            tempConstraint.entries.insert(utf.utf8to16(node->value()));
         } else {
             EXPECT_NAME(node, "bcf:constraint");
             auto *attr = node->first_attribute();
@@ -391,17 +385,115 @@ void Style::parseConstraints (xml_node<> *def, vector<TempConstraintData> &const
             // Note: These values can only appear in the separate types, so
             //  we don't need to check the attribute name (data is the fallback)
             if (attrVal == "mandatory") {
-                addMandatoryConstraint(data, node);
+                extractMandatoryConstraint(tempConstraint, node);
             } else if (attrVal == "conditional") {
-                addConditionalConstraint(data, node);
+                extractConditionalConstraint(tempConstraint, node);
             } else {
                 assert(attrVal == "data");
-                addDataConstraint(data, node);
+                extractDataConstraint(tempConstraint, node);
             }
         }
     }
 
-    constraints.emplace_back(data);
+}
+
+void Style::buildEntryFields (vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields) {
+    vector<Field> fieldsVec;
+    fieldsVec.reserve(universalFields.size());
+    for (u16string &fieldName : universalFields) {
+        auto itr = fields.find(fieldName);
+        if (itr == fields.end()) {
+            std::cerr << "Missing field definition!!!\n";
+            // TODO: Handle this
+        }
+        fieldsVec.emplace_back(itr->second);
+    }
+
+    for (auto &pair : entries) {
+        Entry &entry = pair.second;
+        for (size_t i = 0, length = fieldsVec.size(); i < length; i++) {
+            entry.fields.insert({ universalFields[i], fieldsVec[i] });
+        }
+    }
+
+    for (auto &pair : entryFields) {
+        const u16string &entryName = pair.first;
+        const vector<u16string> &fieldNames = pair.second;
+
+        auto itr = entries.find(entryName);
+        if (itr == entries.end()) continue;
+
+        Entry &entry = itr->second;
+
+        for (const u16string &fieldName : fieldNames) {
+            auto itr2 = fields.find(fieldName);
+            if (itr2 == fields.end()) continue;
+            entry.fields.insert({ fieldName, itr2->second });
+        }
+    }
+}
+
+void addMandatoryConstraints (Entry &entry, MandatoryConstraint &mandatory) {
+    Entry::Constraints &constraints = entry.constraints;
+    constraints.all.insert(constraints.all.begin(), mandatory.all.begin(), mandatory.all.end());
+    constraints.some.insert(constraints.some.begin(), mandatory.some.begin(), mandatory.some.end());
+    constraints.one.insert(constraints.one.begin(), mandatory.one.begin(), mandatory.one.end());
+}
+
+void addConditionalConstraints (Entry &entry, vector<ConditionalConstraint> &conditional) {
+    entry.constraints.conditional.insert(entry.constraints.conditional.end(), conditional.begin(), conditional.end());
+}
+
+void addDataConstraints (Entry &entry, vector<DataConstraint> &dataConstraints) {
+    for (const DataConstraint &constraint : dataConstraints) {
+        for (const u16string &fieldName : constraint.fields) {
+            auto itr = entry.fields.find(fieldName);
+            if (itr == entry.fields.end()) continue;
+            Field &field = itr->second;
+
+            field.constraintType = constraint.type;
+            field.rangeMax = constraint.rangeMax;
+            field.rangeMin = constraint.rangeMin;
+            field.pattern = constraint.pattern;
+        }
+    }
+}
+
+void Style::addEntryConstraints (vector<TempConstraintData> &tempConstraints) {
+    for (TempConstraintData &tempConstraint : tempConstraints) {
+        unordered_set<u16string> &entryNames = tempConstraint.entries;
+
+        if (!entryNames.empty()) {
+            for (const u16string &entryName : entryNames) {
+                auto itr = entries.find(entryName);
+                if (itr == entries.end()) continue;
+
+                Entry &entry = itr->second;
+
+                addMandatoryConstraints(entry, tempConstraint.mandatory);
+                addConditionalConstraints(entry, tempConstraint.conditional);
+                addDataConstraints(entry, tempConstraint.data);
+            }
+        } else {
+            // TODO: Handle global constraint
+        }
+    }
+}
+
+void consolidateConstraints (Entry &entry) {
+
+}
+
+void Style::consolidateEntryConstraints () {
+    for (auto &pair : entries) {
+        consolidateConstraints(pair.second);
+    }
+}
+
+std::optional<Entry *> Style::getEntry (const u16string &name) {
+    auto itr = entries.find(name);
+    if (itr == entries.end()) return {};
+    return &itr->second;
 }
 
 #undef EXPECT_VAL

@@ -4,17 +4,19 @@
 #include <stack>
 #include <lsp-tools/messaging.h>
 
+extern "C" {
+    TSLanguage *tree_sitter_biber();
+}
+
 using std::stack;
 
 void BibEntryIssue::reflect (StringWriter &writer) {
     writer.StartObject();
-
     writer.Key("range"); ADD_TS_RANGE(range);
     writer.Key("severity"); writer.Int(static_cast<int>(severity));
-    writer.Key("code"); writer.Int(code);
+    writer.Key("code"); writer.Int((int) code);
     writer.Key("source"); writer.String(source);
     writer.Key("message"); writer.String(message);
-
     writer.EndObject();
 }
 
@@ -22,16 +24,12 @@ void BibIndexer::addError (const TSNode &node, Error error, const string &msg) {
     TSPoint start = ts_node_start_point(node);
     TSPoint end = ts_node_end_point(node);
 
-    std::cerr << "Starts at [" << start.row << "," << start.column << "]\n";
-
-    BibEntryIssue issue {
-            { start, end },
-            Severity::Error,
-            error,
-            msg
-    };
-
-    issues.emplace_back(issue);
+    issues.emplace_back(BibEntryIssue {
+                                { start, end },
+                                Severity::Error,
+                                error,
+                                msg
+                        });
 }
 
 void BibIndexer::lintErrors (TSNode rootNode) {
@@ -45,7 +43,7 @@ void BibIndexer::lintErrors (TSNode rootNode) {
         if (ts_node_has_error(node)) {
             TSSymbol symbol = ts_node_symbol(node);
             if (symbol == ts_builtin_sym_error) {
-                addError(node, Generic, "Error!");
+                addError(node, Error::Generic, "Error!");
             } else {
                 uint32_t numChildren = ts_node_child_count(node);
                 for (uint32_t i = 0; i < numChildren; i++) {
@@ -68,11 +66,11 @@ void BibIndexer::completeIndex () {
 
     TSNode rootNode = ts_tree_root_node(tree);
 
-    std::cerr << "finding errors...\n";
-
     lintErrors(rootNode);
 
-    std::cerr << "found " << issues.size() << " errors...\n";
+    lintFile(rootNode);
+
+    std::cerr << "found " << issues.size() << " issues...\n";
 
     publishErrors();
 
@@ -104,4 +102,27 @@ void BibIndexer::publishErrors () {
     writer.EndObject();
 
     SEND_MESSAGE
+}
+
+enum Sym {
+    Entry = 30,
+};
+
+void BibIndexer::lintFile (TSNode rootNode) {
+    std::cerr << "Fully linting bib file " << file->getPath() << "\n";
+
+    auto num_children = ts_node_child_count(rootNode);
+    for (uint32_t i = 0; i < num_children; i++) {
+        TSNode child = ts_node_child(rootNode, i);
+
+        switch (ts_node_symbol(child)) {
+            case Sym::Entry:
+                lintEntry(child);
+            default: {}
+        }
+    }
+}
+
+void BibIndexer::lintEntry (TSNode &entry) {
+    addError(entry, Error::Entry, "Found entry");
 }

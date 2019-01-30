@@ -38,9 +38,9 @@ void FileOpenHandler::run (optional<Value> &params) {
     FileManager::add(uri, file);
 
     if (file->hasParser) {
-        BibIndexer indexer { file };
-
-        indexer.completeIndex();
+//        BibIndexer indexer { file };
+//
+//        indexer.completeIndex();
     }
 
 }

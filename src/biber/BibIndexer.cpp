@@ -85,6 +85,7 @@ void BibIndexer::clearCached () {
     entries.clear();
     strings.clear();
     issues.clear();
+    keys.clear();
 }
 
 void BibIndexer::publishErrors () {
@@ -123,6 +124,17 @@ void BibIndexer::lintFile (TSNode rootNode) {
     }
 }
 
-void BibIndexer::lintEntry (TSNode &entry) {
-    addError(entry, Error::Entry, "Found entry");
+void BibIndexer::lintEntry (TSNode &entryNode) {
+    Style::Entry *entry { nullptr };
+
+    u16string entryName {};
+
+    vector<u16string> observedFields {};
+
+    uint32_t childCount = ts_node_named_child_count(entryNode);
+    for (uint32_t i = 0; i < childCount; i++) {
+        TSNode child = ts_node_named_child(entryNode, i);
+        addError(child, Error::Entry, "Found name!");
+//        break;
+    }
 }

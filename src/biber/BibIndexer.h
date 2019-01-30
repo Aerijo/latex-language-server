@@ -77,6 +77,8 @@ private:
 
     vector<BibIndexString> strings;
 
+    unordered_set<u16string> keys;
+
     Style::Style *style { nullptr };
 
 public:

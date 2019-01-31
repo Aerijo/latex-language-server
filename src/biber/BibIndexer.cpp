@@ -127,6 +127,8 @@ void BibIndexer::publishErrors () {
 // TODO: Automate this somehow (needs to be compile time constant for switch statements)
 enum Sym {
     SymComment = 1,
+    SymIdentifier = 16,
+    SymInteger = 18,
     SymJunk = 25,
     SymEntry = 30,
     SymKey = 31,
@@ -199,9 +201,13 @@ bool hasNonASCIIchar (u16string &input) {
 }
 
 void BibIndexer::lintEntry (TSNode &entryNode) {
+    // TODO: Work out exactly how much gets linted
+    //   when missing things such as entry name, key, etc
+    //   (currently we give up as soon as one doesn't exist)
+
     u16string entryName {};
 
-    vector<u16string> observedFields {};
+    vector<std::pair<u16string, TSNode>> observedFields {}; // we're likely to have at most 10, so a vector should be better than a map
 
     uint32_t childCount = ts_node_named_child_count(entryNode);
     uint32_t i = 0;
@@ -220,7 +226,8 @@ void BibIndexer::lintEntry (TSNode &entryNode) {
     TSNode entryNameNode = ts_node_named_child(entryNode, i);
 
     if (!oentry) {
-        addWarning(entryNameNode, Warning::UnknownEntry, "Entry " + UtfHandler().utf16to8(entryName) + " is unexpected");
+        addWarning(entryNameNode, Warning::UnknownEntry, "Entry " + utf.utf16to8(entryName) + " is unexpected");
+        return;
     }
 
     Style::Entry &entry = *oentry.value();
@@ -243,5 +250,231 @@ void BibIndexer::lintEntry (TSNode &entryNode) {
 
     if (hasNonASCIIchar(entryKey)) {
         addWarning(keyNode, Warning::NonASCIIKey, "Non ASCII characters detected in key");
+    }
+
+    lintFields(entryNode, observedFields, i, childCount);
+
+    if (oentry) {
+        postProcessEntry(entryNameNode, entry, observedFields);
+    }
+}
+
+void BibIndexer::lintFields (TSNode &entry, vector<std::pair<u16string, TSNode>> &observedFields, uint32_t &index, uint32_t childCount) {
+    for (; index < childCount; index++) {
+        TSNode node = ts_node_named_child(entry, index);
+
+        switch (ts_node_symbol(node)) {
+            case SymField:
+                lintField(node, observedFields);
+            default: {}
+        }
+    }
+}
+
+void BibIndexer::lintField (TSNode &fieldNode, vector<std::pair<u16string, TSNode>> &observedFields) {
+    uint32_t childCount = ts_node_named_child_count(fieldNode);
+
+    TSNode identifierNode {};
+    uint32_t i = 0;
+
+    bool foundIdentifier { false };
+
+    for (; i < childCount; i++) {
+        TSNode node = ts_node_named_child(fieldNode, i);
+        if (ts_node_symbol(node) == SymIdentifier) {
+            identifierNode = node;
+            foundIdentifier = true;
+            break;
+        }
+    }
+
+    if (!foundIdentifier) {
+        addError(fieldNode, Error::MissingFieldName, "Missing field identifier");
+        return;
+    }
+
+    u16string fieldName = file->textForNode(identifierNode);
+    makeLowerCase(fieldName);
+
+    if (fieldName.empty()) {
+        addError(fieldNode, Error::MissingFieldName, "Empty field identifier");
+        return;
+    }
+
+    for (auto &pair : observedFields) {
+        if (pair.first == fieldName) {
+            addWarning(identifierNode, Warning::DuplicateField, "Duplicates existing field in entry");
+            return;
+        }
+    }
+
+    observedFields.emplace_back(std::pair { fieldName, identifierNode });
+
+    // we should check expectedness in post processing, as it's possible a map
+    // converts this field to another (not that we support maps yet mind)
+}
+
+void BibIndexer::postProcessEntry (const TSNode &entryNameNode, const Style::Entry &entryStyle, vector<std::pair<u16string, TSNode>> &observedFields) {
+    // apply the maps somewhere here
+
+    auto expectedFields = entryStyle.fields;
+
+    // first check if all are expected
+    for (const auto &pair : observedFields) {
+        const u16string &fieldName = pair.first;
+        const TSNode &fieldNameNode = pair.second;
+
+        if (fieldName == u"date") {
+            // TODO: Match Biber's special date handling
+        } else {
+            const auto itr = expectedFields.find(fieldName);
+            if (itr == expectedFields.end()) {
+                addWarning(fieldNameNode, Warning::UnexpectedField, "Unexpected field " + utf.utf16to8(fieldName));
+                continue;
+            }
+
+            Style::Field &fieldStyle = itr->second;
+            optional<u16string> fieldValue = resolveFieldValue(fieldNameNode);
+
+            if (!fieldStyle.nullok && fieldValue && fieldValue->empty()) {
+                addWarning(fieldNameNode, Warning::EmptyField, "Empty field value not permitted");
+            }
+        }
+    }
+
+    checkEntryConstraints(entryNameNode, entryStyle, observedFields);
+}
+
+optional<u16string> BibIndexer::resolveFieldValue (const TSNode &fieldNameNode) {
+    // TODO: Account for maps, string constants, concatenation, etc
+    TSNode node = ts_node_next_named_sibling(fieldNameNode);
+
+    for (; !ts_node_is_null(node); node = ts_node_next_named_sibling(node)) {
+        if (ts_node_symbol(node) == SymValue) {
+            if (ts_node_child_count(node) != 1) return {};
+            TSNode value = ts_node_child(node, 0);
+
+            switch (ts_node_symbol(value)) {
+                case SymInteger:
+                    return file->textForNode(value);
+                case SymString:
+                    if (ts_node_named_child_count(value) == 1) { // "foo" <-- string, foo <-- text
+                        return file->textForNode(ts_node_named_child(value, 0));
+                    } else {
+                        return optional{ u16string {} };
+                    }
+                default:
+                    return {};
+            }
+        };
+    }
+
+    return {};
+}
+
+void BibIndexer::checkEntryConstraints (const TSNode &entryNameNode, const Style::Entry &entryStyle, vector<std::pair<u16string, TSNode>> &observedFields) {
+    vector<u16string> missingAll {};
+    vector<vector<u16string>> missingSome {};
+    vector<vector<u16string>> missingOne {};
+    vector<vector<u16string>> extraOne {};
+
+    auto &constraints = entryStyle.constraints;
+    for (const auto &field : constraints.all) {
+        bool seen { false };
+
+        for (const auto &pair : observedFields) {
+            if (pair.first == field) {
+                seen = true;
+                break;
+            }
+        }
+
+        if (!seen) {
+            missingAll.emplace_back(field);
+        }
+    }
+
+    for (const auto &fields : constraints.some) {
+        bool seen { false };
+
+        for (const auto &field : fields) {
+            for (const auto &pair : observedFields) {
+                if (pair.first == field) {
+                    seen = true;
+                    break;
+                }
+            }
+
+            if (seen) break;
+        }
+
+        if (!seen) {
+            missingSome.emplace_back(fields);
+        }
+    }
+
+    for (const auto &fields : constraints.one) {
+        int seen { 0 };
+
+        for (const auto &field : fields) {
+            for (const auto &pair : observedFields) {
+                if (pair.first == field) {
+                    seen++;
+                    break;
+                }
+            }
+
+            if (seen > 1) break;
+        }
+
+        if (seen == 0) {
+            missingOne.emplace_back(fields);
+        } else if (seen > 1) {
+            extraOne.emplace_back(fields);
+        }
+    }
+
+    if (!missingAll.empty()) {
+        string fields { "[" };
+        for (auto &field : missingAll) {
+            fields.append(utf.utf16to8(field));
+            fields.append(", ");
+        }
+        fields.resize(fields.size() - 2);
+        fields.append("]");
+        addWarning(entryNameNode, Warning::MissingField, "Missing fields " + fields);
+    }
+
+    for (auto &someFields : missingSome) {
+        string fields { "[" };
+        for (auto &field : someFields) {
+            fields.append(utf.utf16to8(field));
+            fields.append(", ");
+        }
+        fields.resize(fields.size() - 2);
+        fields.append("]");
+        addWarning(entryNameNode, Warning::MissingSomeField, "Missing at least one field of " + fields);
+    }
+
+    for (auto &oneFields : missingOne) {
+        string fields { "[" };
+        for (auto &field : oneFields) {
+            fields.append(utf.utf16to8(field));
+            fields.append(", ");
+        }
+        fields.resize(fields.size() - 2);
+        fields.append("]");
+        addWarning(entryNameNode, Warning::MissingOneField, "Missing one field of " + fields);
+    }
+
+    for (auto &extraFields : extraOne) {
+        string fields { "[" };
+        for (auto &field : extraFields) {
+            fields.append(utf.utf16to8(field));
+            fields.append(", ");
+        }
+        fields.resize(fields.size() - 2);
+        fields.append("]");
+        addWarning(entryNameNode, Warning::TooManyField, "To many fields of " + fields);
     }
 }

@@ -21,14 +21,22 @@ enum class Error {
     Unexpected,
     Entry,
     MissingEntryName,
-    MissingKeyName
+    MissingKeyName,
+    MissingFieldName
 };
 
 enum class Warning {
     UnknownEntry,
     DuplicateKey,
     EmptyKey,
-    NonASCIIKey
+    NonASCIIKey,
+    DuplicateField,
+    UnexpectedField,
+    EmptyField,
+    MissingField,
+    MissingSomeField,
+    MissingOneField,
+    TooManyField
 };
 
 enum class Info {
@@ -75,6 +83,8 @@ struct BibIndexString {
  */
 class BibIndexer {
 private:
+    UtfHandler utf {};
+
     File *file { nullptr };
 
     vector<BibEntryIssue> issues;
@@ -114,9 +124,19 @@ public:
 
     void lintEntry (TSNode &entry);
 
+    void lintFields (TSNode &entry, vector<std::pair<u16string, TSNode>> &observedFields, uint32_t &index, uint32_t childCount);
+
+    void lintField (TSNode &fieldNode, vector<std::pair<u16string, TSNode>> &observedFields);
+
     bool getEntryName (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount);
 
     bool getEntryKey (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount);
+
+    void postProcessEntry (const TSNode &entryNameNode, const Style::Entry &entryStyle, vector<std::pair<u16string, TSNode>> &observedFields);
+
+    void checkEntryConstraints (const TSNode &entryNameNode, const Style::Entry &entryStyle, vector<std::pair<u16string, TSNode>> &observedFields);
+
+    optional<u16string> resolveFieldValue (const TSNode &fieldNameNode);
 
     void lintComment ();
 };

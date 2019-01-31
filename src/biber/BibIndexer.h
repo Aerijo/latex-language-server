@@ -26,7 +26,9 @@ enum class Error {
 
 enum class Warning {
     UnknownEntry,
-    DuplicateKey
+    DuplicateKey,
+    EmptyKey,
+    NonASCIIKey
 };
 
 enum class Info {

@@ -191,6 +191,13 @@ bool BibIndexer::getEntryKey (u16string &keyName, TSNode &entryNode, uint32_t &i
     return false;
 }
 
+bool hasNonASCIIchar (u16string &input) {
+    for (auto &c : input) {
+        if (c > 122) return true;
+    }
+    return false;
+}
+
 void BibIndexer::lintEntry (TSNode &entryNode) {
     u16string entryName {};
 
@@ -210,8 +217,9 @@ void BibIndexer::lintEntry (TSNode &entryNode) {
 
     std::optional<Style::Entry *> oentry = style->getEntry(entryName);
 
+    TSNode entryNameNode = ts_node_named_child(entryNode, i);
+
     if (!oentry) {
-        TSNode entryNameNode = ts_node_named_child(entryNode, i);
         addWarning(entryNameNode, Warning::UnknownEntry, "Entry " + UtfHandler().utf16to8(entryName) + " is unexpected");
     }
 
@@ -221,10 +229,19 @@ void BibIndexer::lintEntry (TSNode &entryNode) {
     bool foundEntryKey = getEntryKey(entryKey, entryNode, i, childCount);
     if (!foundEntryKey) return;
 
-    if (keys.count(entryKey) > 0) {
-        TSNode keyNode = ts_node_named_child(entryNode, i);
-        addWarning(keyNode, Warning::DuplicateKey, "Duplicate key name");
+    TSNode keyNode = ts_node_named_child(entryNode, i);
+
+    if (entryKey.empty()) {
+        addWarning(entryNameNode, Warning::EmptyKey, "Key is empty");
     } else {
-        keys.insert({ entryKey });
+        if (keys.count(entryKey) > 0) {
+            addWarning(keyNode, Warning::DuplicateKey, "Duplicate key name");
+        } else {
+            keys.insert({ entryKey });
+        }
+    }
+
+    if (hasNonASCIIchar(entryKey)) {
+        addWarning(keyNode, Warning::NonASCIIKey, "Non ASCII characters detected in key");
     }
 }

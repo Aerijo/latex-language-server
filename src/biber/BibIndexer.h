@@ -18,12 +18,15 @@ enum class Severity {
 
 enum class Error {
     Generic,
+    Unexpected,
     Entry,
-    MissingEntryName
+    MissingEntryName,
+    MissingKeyName
 };
 
 enum class Warning {
-    UnknownEntry
+    UnknownEntry,
+    DuplicateKey
 };
 
 enum class Info {
@@ -110,6 +113,8 @@ public:
     void lintEntry (TSNode &entry);
 
     bool getEntryName (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount);
+
+    bool getEntryKey (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount);
 
     void lintComment ();
 };

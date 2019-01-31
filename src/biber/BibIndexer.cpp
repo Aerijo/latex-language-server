@@ -155,24 +155,39 @@ void BibIndexer::lintFile (TSNode rootNode) {
     }
 }
 
-bool BibIndexer::getEntryName (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount) {
+bool BibIndexer::getEntryName (u16string &entryName, TSNode &entryNode, uint32_t &index, uint32_t childCount) {
     for (; index < childCount; index++) {
-        TSNode child = ts_node_named_child(node, index);
+        TSNode node = ts_node_named_child(entryNode, index);
 
-        switch (ts_node_symbol(child)) {
+        switch (ts_node_symbol(node)) {
             case SymName:
-                entryName = file->textForNode(child);
+                entryName = file->textForNode(node);
                 makeLowerCase(entryName);
                 return true;
             case SymComment:
                 // TODO: Complain about comments inside the entry block
                 break;
             default:
-                addError(node, Error::MissingEntryName, "Could not find entry name");
+                addError(entryNode, Error::Unexpected, "Unexpected value");
                 return false;
         }
     }
 
+    return false;
+}
+
+bool BibIndexer::getEntryKey (u16string &keyName, TSNode &entryNode, uint32_t &index, uint32_t childCount) {
+    for (; index < childCount; index++) {
+        TSNode node = ts_node_named_child(entryNode, index);
+        switch (ts_node_symbol(node)) {
+            case SymKey:
+                keyName = file->textForNode(node);
+                return true;
+            default: {}
+        }
+    }
+
+    addError(entryNode, Error::MissingKeyName, "Missign key name");
     return false;
 }
 
@@ -198,5 +213,18 @@ void BibIndexer::lintEntry (TSNode &entryNode) {
     if (!oentry) {
         TSNode entryNameNode = ts_node_named_child(entryNode, i);
         addWarning(entryNameNode, Warning::UnknownEntry, "Entry " + UtfHandler().utf16to8(entryName) + " is unexpected");
+    }
+
+    Style::Entry &entry = *oentry.value();
+
+    u16string entryKey;
+    bool foundEntryKey = getEntryKey(entryKey, entryNode, i, childCount);
+    if (!foundEntryKey) return;
+
+    if (keys.count(entryKey) > 0) {
+        TSNode keyNode = ts_node_named_child(entryNode, i);
+        addWarning(keyNode, Warning::DuplicateKey, "Duplicate key name");
+    } else {
+        keys.insert({ entryKey });
     }
 }

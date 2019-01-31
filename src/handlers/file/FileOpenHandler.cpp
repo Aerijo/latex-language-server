@@ -2,6 +2,7 @@
 #include <filesystem/File.h>
 #include <filesystem/FileManager.h>
 #include <biber/BibIndexer.h>
+#include <lconfig.h>
 #include "FileOpenHandler.h"
 
 void FileOpenHandler::run (optional<Value> &params) {
@@ -38,9 +39,9 @@ void FileOpenHandler::run (optional<Value> &params) {
     FileManager::add(uri, file);
 
     if (file->hasParser) {
-//        BibIndexer indexer { file };
-//
-//        indexer.completeIndex();
+        BibIndexer indexer { file, g_config->bibtex.style };
+
+        indexer.completeIndex();
     }
 
 }

@@ -16,7 +16,7 @@
  */
 class File {
 private:
-    Uri uri;
+    Uri::Uri uri;
 
     string languageId;
 
@@ -37,7 +37,7 @@ public:
 
     File () = delete;
 
-    File (Uri &uri, string &languageId, string &text);
+    File (Uri::Uri &uri, string &languageId, string &text);
 
     File (string &uri, string &languageId, versionNum version, string &text);
 
@@ -59,11 +59,15 @@ public:
 
     void print (std::ostream &stream);
 
-    void setTextInRange (Range oldRange, std::string &&text);
+    void setTextInRange (Range &oldRange, std::string &&text);
 
     void setText (std::string &&text);
 
-    void setTextInRange (Range oldRange, std::u16string &&text);
+    void setTextInRange (Range &oldRange, std::u16string &&text);
+
+    u16string textForNode (const TSNode &node);
+
+    u16string textInRange (const Range &range);
 
     bool validNextVersion (versionNum nextVersion);
 

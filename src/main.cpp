@@ -23,7 +23,7 @@ int main (int argc, char** argv, const char** env) {
 
     g_config = new GlobalConfig();
 
-    auto *style = new Style::Style("/home/benjamin/test/main.bcf");
+    auto *style = new Style::Style("/home/benjamin/github/latex-language-server/test/resources/project1/main.bcf");
 
     g_config->bibtex.style = style;
 

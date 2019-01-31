@@ -9,6 +9,8 @@
 #define IS_WINDOWS false
 #endif
 
+namespace Uri {
+
 bool validUriScheme (const string &scheme) {
     if (scheme.empty()) return false;
 
@@ -185,7 +187,7 @@ Uri Uri::parse (const string &value) {
                     default:
                         goto path;
                 }
-            // TODO
+                // TODO
             case '/':
                 // cannot jump from scheme to authority without colon; must actually be a path
             case '?':
@@ -345,4 +347,6 @@ bool Uri::operator == (Uri &that) {
            && path == that.path
            && query == that.query
            && fragment == that.fragment;
+}
+
 }

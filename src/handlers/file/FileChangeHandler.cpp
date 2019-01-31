@@ -70,8 +70,9 @@ void FileChangeHandler::run (optional<Value> &params) {
         string text = change["text"].GetString();
 
         if (change.HasMember("range")) {
-            Value &range = change["range"];
-            file->setTextInRange(getRangeFromJSON(range), std::move(text));
+            Value &rangeVal = change["range"];
+            Range range = getRangeFromJSON(rangeVal);
+            file->setTextInRange(range, std::move(text));
         } else {
             text = change["text"].GetString();
             file->setText(std::move(text));

@@ -77,6 +77,11 @@ for a while, as they could be difficult to handle gracefully.
     @ENTRY{} syntax, so is the one I get by default.
 - Maps are applied in order User -> Style -> Driver
 
+- We currently use UTF16 in the underlying buffer. This is important for correct Point
+  values. However, UTF8 is needed in the translation to JSON, and might work better in
+  maps... plus we need to lower case the UTF16 somehow.
+  
+  - Initially only single file support will be available.
 
 ## "Natively" supported maps
 These are maps I intend to support "natively", by processing them at Style

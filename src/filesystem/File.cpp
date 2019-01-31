@@ -9,11 +9,11 @@ bool File::operator == (File &that) {
     return uri == that.uri;
 }
 
-File::File (Uri &uri, string &languageId, string &text) : uri { uri }, languageId { languageId } {
+File::File (Uri::Uri &uri, string &languageId, string &text) : uri { uri }, languageId { languageId } {
     buffer.set_text(utf.utf8to16(text));
 }
 
-File::File (string &uri, string &languageId, versionNum version, string &text) : uri { Uri::parse(uri) }, languageId { languageId }, version { version } {
+File::File (string &uri, string &languageId, versionNum version, string &text) : uri { Uri::Uri::parse(uri) }, languageId { languageId }, version { version } {
     buffer.set_text(utf.utf8to16(text));
 }
 
@@ -22,7 +22,7 @@ void File::print (std::ostream &stream) {
     stream << utf.utf16to8(text);
 }
 
-void File::setTextInRange (Range oldRange, std::string &&text) {
+void File::setTextInRange (Range &oldRange, std::string &&text) {
     setTextInRange(oldRange, utf.utf8to16(text));
 }
 
@@ -65,8 +65,7 @@ TSPoint TSEndPointOfText (u16string &text) {
     return TSPoint { newlines, length - lastNewlineIndex };
 }
 
-
-void File::setTextInRange (Range oldRange, std::u16string &&text) {
+void File::setTextInRange (Range &oldRange, std::u16string &&text) {
     if (hasParser) {
         auto startIndex = buffer.clip_position(oldRange.start).offset;
         u16string oldText = buffer.text_in_range(oldRange);
@@ -118,8 +117,6 @@ void File::setVersion (versionNum nextVersion) {
 
 void File::setText (std::string &&text) {
     buffer.set_text(utf.utf8to16(text));
-
-
 }
 
 File::~File () {
@@ -167,6 +164,22 @@ TSTree *File::getParseTree () {
 
 string File::getPath () {
     return uri.getPath();
+}
+
+Range rangeForNode (const TSNode &node) {
+    TSPoint startPoint = ts_node_start_point(node);
+    TSPoint endPoint = ts_node_end_point(node);
+
+    return Range { { startPoint.row, startPoint.column >> 1 }, { endPoint.row, endPoint.column >> 1 } };
+}
+
+u16string File::textForNode (const TSNode &node) {
+    Range range = rangeForNode(node);
+    return textInRange(range);
+}
+
+u16string File::textInRange (const Range &range) {
+    return buffer.text_in_range(range);
 }
 
 

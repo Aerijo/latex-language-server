@@ -10,6 +10,18 @@ extern "C" {
 
 using std::stack;
 
+void makeLowerCase (u16string &input) {
+    // TODO: Full unicode support (but ASCII should be adequate for bibtex compliant sources)
+    auto end = input.end();
+    for (auto itr = input.begin(); itr != end; itr++) {
+        auto &c = *itr;
+
+        if ('A' <= c && c <= 'Z') {
+            c += 32;
+        }
+    }
+}
+
 void BibEntryIssue::reflect (StringWriter &writer) {
     writer.StartObject();
     writer.Key("range"); ADD_TS_RANGE(range);
@@ -20,16 +32,22 @@ void BibEntryIssue::reflect (StringWriter &writer) {
     writer.EndObject();
 }
 
-void BibIndexer::addError (const TSNode &node, Error error, const string &msg) {
+void BibIndexer::addLint (const TSNode &node, Severity sev, int code, const string &msg) {
     TSPoint start = ts_node_start_point(node);
     TSPoint end = ts_node_end_point(node);
+    issues.emplace_back(BibEntryIssue { { start, end }, sev, code, msg });
+}
 
-    issues.emplace_back(BibEntryIssue {
-                                { start, end },
-                                Severity::Error,
-                                error,
-                                msg
-                        });
+void BibIndexer::addError (const TSNode &node, Error error, const string &msg) {
+    addLint(node, Severity::Error, (int) error, msg);
+}
+
+void BibIndexer::addWarning (const TSNode &node, Warning warning, const string &msg) {
+    addLint(node, Severity::Warning, (int) warning, msg);
+}
+
+void BibIndexer::addInfo (const TSNode &node, Info info, const string &msg) {
+    addLint(node, Severity::Info, (int) info, msg);
 }
 
 void BibIndexer::lintErrors (TSNode rootNode) {
@@ -105,36 +123,80 @@ void BibIndexer::publishErrors () {
     SEND_MESSAGE
 }
 
+// Copied from tree-sitter-biber/src/parser.c
+// TODO: Automate this somehow (needs to be compile time constant for switch statements)
 enum Sym {
-    Entry = 30,
+    SymComment = 1,
+    SymJunk = 25,
+    SymEntry = 30,
+    SymKey = 31,
+    SymName = 32,
+    SymField = 33,
+    SymValue = 34,
+    SymString = 36
 };
 
 void BibIndexer::lintFile (TSNode rootNode) {
     std::cerr << "Fully linting bib file " << file->getPath() << "\n";
+
+    if (style == nullptr) {
+        std::cerr << "Cannot analyse bib file without style!\n"; // though can do keys and such...
+    }
 
     auto num_children = ts_node_child_count(rootNode);
     for (uint32_t i = 0; i < num_children; i++) {
         TSNode child = ts_node_child(rootNode, i);
 
         switch (ts_node_symbol(child)) {
-            case Sym::Entry:
+            case SymEntry:
                 lintEntry(child);
             default: {}
         }
     }
 }
 
-void BibIndexer::lintEntry (TSNode &entryNode) {
-    Style::Entry *entry { nullptr };
+bool BibIndexer::getEntryName (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount) {
+    for (; index < childCount; index++) {
+        TSNode child = ts_node_named_child(node, index);
 
+        switch (ts_node_symbol(child)) {
+            case SymName:
+                entryName = file->textForNode(child);
+                makeLowerCase(entryName);
+                return true;
+            case SymComment:
+                // TODO: Complain about comments inside the entry block
+                break;
+            default:
+                addError(node, Error::MissingEntryName, "Could not find entry name");
+                return false;
+        }
+    }
+
+    return false;
+}
+
+void BibIndexer::lintEntry (TSNode &entryNode) {
     u16string entryName {};
 
     vector<u16string> observedFields {};
 
     uint32_t childCount = ts_node_named_child_count(entryNode);
-    for (uint32_t i = 0; i < childCount; i++) {
-        TSNode child = ts_node_named_child(entryNode, i);
-        addError(child, Error::Entry, "Found name!");
-//        break;
+    uint32_t i = 0;
+
+    bool foundEntryName = getEntryName(entryName, entryNode, i, childCount);
+    if (!foundEntryName) return;
+
+    if (entryName.empty()) {
+        TSNode entryNameNode = ts_node_child(entryNode, 0);
+        addError(entryNameNode, Error::MissingEntryName, "No entry name");
+        return;
+    }
+
+    std::optional<Style::Entry *> oentry = style->getEntry(entryName);
+
+    if (!oentry) {
+        TSNode entryNameNode = ts_node_named_child(entryNode, i);
+        addWarning(entryNameNode, Warning::UnknownEntry, "Entry " + UtfHandler().utf16to8(entryName) + " is unexpected");
     }
 }

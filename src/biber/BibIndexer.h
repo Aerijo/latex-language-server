@@ -18,11 +18,12 @@ enum class Severity {
 
 enum class Error {
     Generic,
-    Entry
+    Entry,
+    MissingEntryName
 };
 
 enum class Warning {
-
+    UnknownEntry
 };
 
 enum class Info {
@@ -32,12 +33,12 @@ enum class Info {
 struct BibEntryIssue : Init::Reflectable {
     void reflect (StringWriter &writer) override;
 
-    BibEntryIssue (TSRange range, Severity sev, Error code, string msg) : range { range }, severity { sev }, code { code }, message { msg } {}
+    BibEntryIssue (TSRange range, Severity sev, int code, string msg) : range { range }, severity { sev }, code { code }, message { msg } {}
 
     // generic issue that can be translated to a linter message
     TSRange range;
     Severity severity;
-    Error code;
+    int code;
     string message; // TODO: remove from here and generate on demand based on error code?
     string source { "biber" };
 };
@@ -92,7 +93,13 @@ public:
 
     void clearCached ();
 
+    void addLint (const TSNode &node, Severity sev, int code, const string &msg);
+
     void addError (const TSNode &node, Error error, const string &msg);
+
+    void addWarning (const TSNode &node, Warning warning, const string &msg);
+
+    void addInfo (const TSNode &node, Info info, const string &msg);
 
     void publishErrors ();
 
@@ -101,6 +108,8 @@ public:
     void lintFile (TSNode rootNode);
 
     void lintEntry (TSNode &entry);
+
+    bool getEntryName (u16string &entryName, TSNode &node, uint32_t &index, uint32_t childCount);
 
     void lintComment ();
 };

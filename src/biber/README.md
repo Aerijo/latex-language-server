@@ -92,3 +92,14 @@ creation time (so we reduce the special handling in each entry)
 - map_field_source && map_field_target (flat field name conversion)
 
 Field conditional maps will not have support yet
+
+
+## Thoughts
+
+Revised entry parse process:
+1. Grab entry type, key, and field-value pairs
+2. Apply maps as per Biber
+3. Validate
+
+With iterative parsing, the extra cost to do things right should be minimal.
+This will be a future enhancement though.

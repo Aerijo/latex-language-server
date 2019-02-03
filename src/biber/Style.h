@@ -41,6 +41,38 @@ struct Constant {
     u16string value {};
 };
 
+struct MapStep {
+    // Only a small number (compared to what's possible) will be handled initially. This can be improved upon.
+    enum class Type {
+        Unhandled,
+        RenameEntry,
+        RenameField,
+        SetField,
+    } type { Type::Unhandled };
+
+    u16string typeSource {};
+    u16string typeTarget {};
+    bool final { false };
+
+    u16string fieldSet {};
+    u16string fieldValue {};
+    u16string fieldSource {};
+    u16string fieldTarget {};
+};
+
+struct SourceMap { // a collation of map_step's (inside a map)
+    vector<u16string> forEntries {};
+    unordered_set<u16string> notForEntries {};
+
+    vector<std::pair<u16string, u16string>> entryAliases {}; // phdthesis -> thesis
+    vector<std::pair<u16string, u16string>> fieldAliases {}; // journal -> journaltitle
+
+    unordered_map<u16string, vector<std::pair<u16string, u16string>>> entryFieldAliases {};
+
+    vector<u16string> setFields {}; // day is set globally apparently (to null)
+    unordered_map<u16string, vector<u16string>> setEntryFields {}; // phdthesis sets type
+};
+
 struct ConditionalConstraint {
     enum class Quant {
         All,
@@ -138,6 +170,8 @@ std::ostream & operator << (std::ostream &out, const Field &field);
 struct Entry {
     Entry () = delete;
 
+    Entry copy ();
+
     explicit Entry (u16string &name, bool skipOut = false) : name { name }, skipOut { skipOut } {}
 
     u16string name {};
@@ -170,6 +204,10 @@ private:
 
     void parseConstants (xml_node<> *def);
 
+    void parseSourcemap (xml_node<> *def, vector<SourceMap> &sourcemaps);
+
+    void parseMaps (xml_node<> *def, vector<SourceMap> &maps);
+
     void parseEntryTypes (xml_node<> *def);
 
     void parseFields (xml_node<> *def, unordered_map<u16string, Field> &fields);
@@ -178,11 +216,13 @@ private:
 
     void parseConstraints (xml_node<> *def, vector<TempConstraintData> &tempConstraints);
 
-    void buildEntryFields(vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields);
+    void buildEntryFields (vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields);
 
-    void addEntryConstraints(vector<TempConstraintData> &tempConstraints);
+    void addEntryConstraints (vector<TempConstraintData> &tempConstraints);
 
-    void consolidateEntryConstraints();
+    void applySourcemaps (vector<SourceMap> sourcemaps);
+
+    void consolidateEntryConstraints ();
 
 public:
     Style () = default;

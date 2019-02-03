@@ -314,6 +314,21 @@ void BibIndexer::lintField (TSNode &fieldNode, vector<std::pair<u16string, TSNod
     // converts this field to another (not that we support maps yet mind)
 }
 
+bool endsWith (const u16string &input, const u16string &ending) {
+    if (input.length() < ending.length()) return false;
+
+    auto inItr = input.end() - ending.length();
+    auto endItr = ending.begin();
+
+    auto end = ending.end();
+
+    for (; endItr != end; endItr++, inItr++) {
+        if (*endItr != *inItr) return false;
+    }
+
+    return true;
+}
+
 void BibIndexer::postProcessEntry (const TSNode &entryNameNode, const Style::Entry &entryStyle, vector<std::pair<u16string, TSNode>> &observedFields) {
     // apply the maps somewhere here
 
@@ -324,7 +339,7 @@ void BibIndexer::postProcessEntry (const TSNode &entryNameNode, const Style::Ent
         const u16string &fieldName = pair.first;
         const TSNode &fieldNameNode = pair.second;
 
-        if (fieldName == u"date") {
+        if (endsWith(fieldName, u"date")) {
             // TODO: Match Biber's special date handling
         } else {
             const auto itr = expectedFields.find(fieldName);

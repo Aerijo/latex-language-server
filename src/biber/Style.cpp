@@ -56,6 +56,21 @@ std::ostream &operator << (std::ostream &out, const Entry &input) {
     return out;
 }
 
+Entry Entry::copy () {
+    Entry copy { name, skipOut };
+
+    copy.constraints = Entry::Constraints {
+        constraints.all,
+        constraints.some,
+        constraints.one,
+        constraints.conditional // TODO: Copy conditional constraints properly
+    };
+
+    copy.fields = fields;
+
+    return copy;
+}
+
 void applyGlobalDataConstraints (unordered_map<u16string, Field> &fields, vector<TempConstraintData> &tempConstraints) {
     // TODO
 }
@@ -90,9 +105,13 @@ void Style::buildFromXML (xml_document<> &doc) {
     unordered_map<u16string, vector<u16string>> entryFields {};
     unordered_map<u16string, Field> fields {};
 
+    vector<SourceMap> sourcemaps {};
+
     for (xml_node<> *node = doc.first_node()->first_node(); node; node = node->next_sibling()) {
         const char *name = node->name();
-        if (IS("datamodel")) {
+        if (IS("sourcemap")) {
+            parseSourcemap(node, sourcemaps);
+        } else if (IS("datamodel")) {
             parseDatamodel(node, tempConstraints, universalFields, entryFields, fields);
         }
     }
@@ -104,6 +123,180 @@ void Style::buildFromXML (xml_document<> &doc) {
     addEntryConstraints(tempConstraints);
 
     if (CONSOLIDATE_CONSTRAINTS) consolidateEntryConstraints();
+
+    applySourcemaps(sourcemaps);
+}
+
+void Style::parseSourcemap (xml_node<> *def, vector<SourceMap> &sourcemaps) {
+    EXPECT_NAME(def, "bcf:sourcemap");
+    // TODO: Handle level (user, style, driver) properly
+
+    for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
+        EXPECT_NAME(node, "bcf:maps");
+
+        bool canParseMaps { false };
+
+        for (xml_attribute<> *attr = node->first_attribute(); attr; attr = attr->next_attribute()) {
+            string attrName = attr->name();
+            string attrVal = attr->value();
+            if (attrName == "datatype") {
+                if (attrVal == "bibtex") {
+                    canParseMaps = true;
+                } else {
+                    // we don't have support for biblatexml parsing yet
+                    break;
+                }
+            }
+        }
+
+        if (canParseMaps) {
+            parseMaps(node, sourcemaps);
+        }
+    }
+}
+
+MapStep parseMapStep (xml_node<> *node) {
+    EXPECT_NAME(node, "bcf:map_step");
+
+    MapStep step { MapStep::Type::Unhandled };
+
+    bool hasTSource { false };
+    bool hasTTarget { false };
+    bool hasFSet { false };
+    bool hasFValue { false };
+    bool hasFSource { false };
+    bool hasFTarget { false };
+
+    for (auto *attr = node->first_attribute(); attr; attr = attr->next_attribute()) {
+        string attrName = attr->name();
+        u16string attrVal = utf.utf8to16(attr->value());
+
+        if (attrName == "map_type_source") {
+            hasTSource = true;
+            step.typeSource = attrVal;
+        } else if (attrName == "map_type_target") {
+            hasTTarget = true;
+            step.typeTarget = attrVal;
+        } else if (attrName == "map_final") {
+            step.final = true; // "1" is the only allowed value
+        } else if (attrName == "map_field_set") {
+            hasFSet = true;
+            step.fieldSet = attrVal;
+        } else if (attrName == "map_field_value") {
+            hasFValue = true;
+            step.fieldValue = attrVal;
+        } else if (attrName == "map_field_source") {
+            hasFSource = true;
+            step.fieldSource = attrVal;
+        } else if (attrName == "map_field_target") {
+            hasFTarget = true;
+            step.fieldTarget = attrVal;
+        } else {
+            return step; // TODO: handle other possible attributes
+        }
+    }
+
+    if (hasTSource) {
+        if (hasTTarget && !(hasFTarget || hasFValue || hasFSet || hasFSource)) {
+            step.type = MapStep::Type::RenameEntry;
+        }
+    } else if (hasFSource) {
+        if (hasFTarget && !(hasTTarget || hasFValue || hasFSet)) {
+            step.type = MapStep::Type::RenameField;
+        }
+    } else if (hasFSet) {
+        if (hasFValue && !(hasTTarget || hasFTarget)) {
+            step.type = MapStep::Type::SetField;
+        }
+    }
+
+    return step;
+}
+
+void parseMap (xml_node<> *node, vector<SourceMap> &maps) {
+    EXPECT_NAME(node, "bcf:map");
+
+    vector<u16string> forEntries {};
+    unordered_set<u16string> notForEntries {};
+
+    vector<MapStep> steps {};
+
+    // TODO: Handle attributes
+
+    for (auto *map = node->first_node(); map; map = map->next_sibling()) {
+        const char *name = map->name();
+
+        if (IS("per_datasource")) {
+            // TODO: Handle different rules for different datasource. Ignore this attribute for now.
+        } else if (IS("per_type")) {
+            forEntries.emplace_back(utf.utf8to16(map->value()));
+        } else if (IS("per_nottype")) {
+            notForEntries.insert(utf.utf8to16(map->value()));
+        } else if (IS("map_step")) {
+            MapStep step = parseMapStep(map);
+            if (step.type == MapStep::Type::Unhandled) {
+                return;
+            }
+            steps.emplace_back(step);
+        }
+    }
+
+    if (steps.empty()) {
+        return;
+    }
+
+    SourceMap &sourcemap = maps.emplace_back(SourceMap { forEntries, notForEntries });
+
+    u16string entryName {};
+    bool entrySpecificMaps { false };
+
+    auto itr = steps.begin();
+    auto end = steps.end();
+
+    for (; itr != end; itr++) {
+        auto &step = *itr;
+        switch (step.type) {
+            case MapStep::Type::RenameEntry:
+                sourcemap.entryAliases.emplace_back(std::pair { step.typeSource, step.typeTarget });
+                if (step.final) {
+                    entryName = step.typeSource;
+                    entrySpecificMaps = true;
+                }
+                break;
+            case MapStep::Type::RenameField:
+                sourcemap.fieldAliases.emplace_back(std::pair { step.fieldSource, step.fieldTarget });
+                break;
+            case MapStep::Type::SetField:
+                sourcemap.setFields.emplace_back(step.fieldSet); // ignore value; assume proper
+            default: {}
+        }
+
+        if (entrySpecificMaps) break;
+    }
+
+    if (!entrySpecificMaps) return;
+
+    itr++;
+    for (; itr != end; itr++) {
+        auto &step = *itr;
+        if (step.final) return; // give up on nested final constraints...
+        switch (step.type) {
+            case MapStep::Type::RenameField:
+                sourcemap.entryFieldAliases[entryName].emplace_back(std::pair { step.fieldSource, step.fieldTarget });
+                break;
+            case MapStep::Type::SetField:
+                sourcemap.setEntryFields[entryName].emplace_back(step.fieldSet);
+            default: {}
+        }
+    }
+}
+
+void Style::parseMaps (xml_node<> *def, vector<SourceMap> &maps) {
+    EXPECT_NAME(def, "bcf:maps");
+
+    for (xml_node<> *node = def->first_node(); node; node = node->next_sibling()) {
+        parseMap(node, maps);
+    }
 }
 
 void Style::parseDatamodel (xml_node<> *datamodel, vector<TempConstraintData> &tempConstraints, vector<u16string> &universalFields, unordered_map<u16string, vector<u16string>> &entryFields, unordered_map<u16string, Field> &fields) {
@@ -490,10 +683,111 @@ void Style::consolidateEntryConstraints () {
     }
 }
 
+template<typename T>
+bool contains (vector<T> &input, T element) {
+    return std::find(input.begin(), input.end(), element) != input.end();
+}
+
+template<typename T>
+vector<T> removeOccurrences (vector<T> &input, vector<T> toRemove) {
+    vector<T> newList {};
+    for (auto &elem : input) {
+        std::cerr << "Testing " << elem << "\n";
+        if (!contains(toRemove, elem)) {
+            newList.push_back(elem);
+        } else {
+            std::cerr << "Removing " << elem << "\n";
+        }
+    }
+
+    return newList;
+}
+
 std::optional<Entry *> Style::getEntry (const u16string &name) {
     auto itr = entries.find(name);
     if (itr == entries.end()) return {};
     return &itr->second;
+}
+
+std::ostream &operator << (std::ostream &out, const SourceMap &map) {
+    out << "SourceMap: Set Entry Fields: " << map.setEntryFields.size();
+
+    return out;
+}
+
+void addFieldAlias (Entry &entry, const u16string &alias, const u16string &actual) {
+    auto itr = entry.fields.find(actual);
+    if (itr == entry.fields.end()) return;
+
+    Field actualFieldCopy = itr->second;
+    actualFieldCopy.name = alias;
+
+    entry.fields.insert({ alias, actualFieldCopy });
+
+
+    // TODO: Well, you get the idea
+    auto &constraints = entry.constraints;
+    for (auto itr2 = constraints.all.begin(), end = constraints.all.end(); itr2 != end; itr2++) {
+        if (*itr2 == actual) {
+            constraints.all.erase(itr2);
+            constraints.one.emplace_back(vector { actual, alias });
+            return;
+        }
+    }
+
+    for (auto &fields : constraints.some) {
+        if (std::find(fields.begin(), fields.end(), actual) != fields.end()) {
+            fields.emplace_back(alias);
+            return;
+        }
+    }
+
+    for (auto &fields : constraints.one) {
+        if (std::find(fields.begin(), fields.end(), actual) != fields.end()) {
+            fields.emplace_back(alias);
+            return;
+        }
+    }
+}
+
+void Style::applySourcemaps (vector<SourceMap> sourcemaps) {
+    for (SourceMap &sourcemap : sourcemaps) {
+        std::cerr << sourcemap << "\n";
+        for (const auto &pair : sourcemap.entryAliases) {
+            const u16string &alias = pair.first;
+            const u16string &actual = pair.second;
+
+            auto itr = entries.find(actual);
+            if (itr == entries.end()) continue;
+
+            Entry entryCopy = itr->second.copy();
+            entries.insert({ alias, entryCopy });
+        }
+
+        for (const auto &pair : sourcemap.setEntryFields) {
+            const auto &entryName = pair.first;
+            const auto &setFields = pair.second;
+
+            auto itr = entries.find(entryName);
+            if (itr == entries.end()) continue;
+            Entry &entry = itr->second;
+
+            auto &constraints = entry.constraints;
+
+            constraints.all = removeOccurrences(constraints.all, setFields);
+
+        }
+
+        for (const auto &pair : sourcemap.fieldAliases) {
+            const u16string &alias = pair.first;
+            const u16string &actual = pair.second;
+
+            for (auto &entryPair : entries) {
+                Entry &entry = entryPair.second;
+                addFieldAlias(entry, alias, actual);
+            };
+        }
+    }
 }
 
 #undef EXPECT_VAL

@@ -19,8 +19,6 @@ addons:
     - g++-8
     - cmake
 before_install:
-- sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-- git add -A && git commit -m "convert .gitmodules"
 - git submodule update --init --recursive
 install:
 - sudo apt-get install -qq g++-8

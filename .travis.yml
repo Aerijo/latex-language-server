@@ -30,6 +30,8 @@ script:
 - g++ --version
 - cmake --version
 - script/build.sh
+- pwd
+- cat .gitmodules
 deploy:
   provider: releases
   api_key:

@@ -35,7 +35,4 @@ script:
   - gcc --version
   - g++ --version
   - cmake --version
-  - mkdir cmake-build-debug
-  - cd cmake-build-debug
-  - cmake ..
-  - cmake --build . --target latex_language_server
+  - script/build.sh

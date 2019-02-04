@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-project(latex_language_server LANGUAGES C CXX VERSION 0.0.0)
+project(latex_language_server LANGUAGES C CXX VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 

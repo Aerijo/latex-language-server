@@ -10,26 +10,6 @@ git:
   depth: false
   submodules: false
 
-matrix:
-  include:
-    - language: c++
-      compiler: gcc
-    - addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-8
-            - g++-8
-            - libtbb-dev
-      env:
-        - CC=gcc-8 CXX=g++-8
-        - CXXFLAGS="-fuse-ld=gold"
-addons:
-  apt:
-    packages:
-      - libtbb-dev
-
 # from https://github.com/richelbilderbeek/travis_gcc_cpp17/blob/master/.travis.yml
 before_install:
   - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
@@ -38,8 +18,8 @@ before_install:
   - sudo apt-get update -qq
 
 install:
-  - sudo apt-get install -qq g++-6
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
+  - sudo apt-get install -qq g++-8
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 90
 
 script:
   - mkdir cmake-build-debug

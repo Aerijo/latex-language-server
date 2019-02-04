@@ -1,5 +1,5 @@
 #include "ShutDownHandler.h"
-#include "messaging.h"
+#include "lsp-tools/messaging.h"
 
 void ShutDownHandler::run (Id &id, optional<Value> &params) {
     INIT_WRITER

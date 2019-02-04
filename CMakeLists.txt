@@ -83,8 +83,7 @@ add_executable(latex_language_server
         src/biber/Style.cpp)
 
 target_include_directories(latex_language_server PRIVATE
-        src
-        src/lsp-tools)
+        src)
 
 target_include_directories(latex_language_server PRIVATE
         third_party/rapidjson/include

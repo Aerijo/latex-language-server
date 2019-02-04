@@ -8,7 +8,7 @@
 
 #include <rapidjson/document.h>
 
-#include "definitions.h"
+#include "lsp-tools/definitions.h"
 
 //using std::optional;
 using std::string;

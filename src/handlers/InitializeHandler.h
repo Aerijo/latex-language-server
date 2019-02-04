@@ -5,8 +5,8 @@
 
 #include <rapidjson/document.h>
 
-#include "definitions.h"
-#include "Handler.h"
+#include "lsp-tools/definitions.h"
+#include "lsp-tools/Handler.h"
 
 
 using rapidjson::Value;

@@ -1,0 +1,33 @@
+language: cpp
+
+dist: xenial
+
+compiler:
+#  - clang # TODO
+  - gcc
+
+git:
+  depth: false
+  submodules: true
+
+# from https://github.com/richelbilderbeek/travis_gcc_cpp17/blob/master/.travis.yml
+before_install:
+  # C++17
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
+install:
+  # C++17
+  - sudo apt-get install -qq g++-6
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
+
+script:
+  - cmake --build cmake-build-debug --target latex_language_server -- -j 6
+
+deploy:
+  provider: releases
+  api_key:
+    secure: toHRPtTPgKAlSW3PccTmKUw5m5bCu6YYO8f8iSaBrrwv6urvrZ9jX5GHTtMLSWbGG5E/Y6Yi7euEY7CG9/5PXSF7kdxBQtbjM8sXwPL1uGgm+iTtVX2kuEyOG4msK3kDKSVzyd1ff0d4fKGTNfPoBbug5indpu7EMvsn4hapOdExcXEPxHLEEZp/YdsE0FKOjWaSpLTDoyi81BjtTe2mI+mE1AaFyVKb/tuqfl6SrGwf7yMDRGkiI8Ce3+itRpjKsK7D0MWClbNo7DV4B69YDd9xy5mj1ujhFhzYQ9PLY1wivzcrvbPEgHKSDfWcrb1SGKb3zS6vHheWRQkRM+dze8SuLC+xgHw3Z8VsDQECcWxICmFCUnzxFqHKE57G1Zh0SMS4ZJBN82LVicRaCOi4RahJNNeV7Ms6lijihE+Ybfv2H0UQ427IjZHnJMhAuY+eudRB5BJtMooJcHGTSGJFIZWlU0gZ+CBWf3n9ta21M4ajsN2lxFeZiR3KqHw52xMG8hCGCcZDGAY+EGkttNNHui2xgcJDOiDBD8MVwFKNCnvjM9Ly0yp7fsv0fvuGg21GU/JKTPtJLoYwe8/DruMXXudZMBEmM7Go2hTuO6aNURqTSWVrFHFuKuW24MCX/SiyoM/c1qQr1flhijMmAZnjDzrUMSGq6jzPBKeuOuOc0Ls=
+  file: ''
+  on:
+    repo: Aerijo/latex-language-server

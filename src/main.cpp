@@ -3,9 +3,9 @@
 #include "filesystem/FileManager.h"
 #include "lconfig.h"
 
-#include "handlerRegistration.h"
-#include "MessageHandler.h"
-#include "QueueManager.h"
+#include "lsp-tools/handlerRegistration.h"
+#include "lsp-tools/MessageHandler.h"
+#include "lsp-tools/QueueManager.h"
 
 #include "filesystem/UtfHandler.h"
 #include <filesystem/File.h>

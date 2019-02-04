@@ -1,6 +1,6 @@
 #include "CompletionProvider.h"
 
-#include "messaging.h"
+#include "lsp-tools/messaging.h"
 
 void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabilities) {
     if (!capabilities.completionProvider) capabilities.completionProvider = Init::CompletionOptions {};

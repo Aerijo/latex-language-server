@@ -772,7 +772,7 @@ void Style::applySourcemaps (vector<SourceMap> sourcemaps) {
             auto &constraints = entry.constraints;
 
             constraints.all = removeOccurrences(constraints.all, setFields);
-
+            // TODO: Remove "some" constraints, and set "one" constraints to unexpected
         }
 
         for (const auto &pair : sourcemap.fieldAliases) {

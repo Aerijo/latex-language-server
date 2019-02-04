@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "definitions.h"
+#include "lsp-tools/definitions.h"
 #include "InitializeHandler.h"
-#include "HandlerManager.h"
-#include "messaging.h"
+#include "lsp-tools/HandlerManager.h"
+#include "lsp-tools/messaging.h"
 
 
 void registerAllHandlerCapabilities (Init::ServerCapabilities &capabilities) {

@@ -10,18 +10,30 @@ git:
   depth: false
   submodules: false
 
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-8
+      - g++-8
+      - cmake
+
 # from https://github.com/richelbilderbeek/travis_gcc_cpp17/blob/master/.travis.yml
 before_install:
   - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
   - git submodule update --init --recursive
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo apt-get update -qq
 
 install:
   - sudo apt-get install -qq g++-8
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 90
 
 script:
+  - sudo ln -s /usr/bin/gcc-8 /usr/local/bin/gcc
+  - sudo ln -s /usr/bin/g++-8 /usr/local/bin/g++
+  - export CC=/usr/bin/gcc-8
+  - export CXX=/usr/bin/g++-8
+  - gcc -v && g++ -v && cmake --version
   - mkdir cmake-build-debug
   - cd cmake-build-debug
   - cmake ..

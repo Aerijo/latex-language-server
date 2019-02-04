@@ -15,6 +15,7 @@ add_executable(latex_language_server
         src/main.cpp
         src/lconfig.h
 
+
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ThreadedQueue.h
         src/lsp-tools/MessageHandler.cpp

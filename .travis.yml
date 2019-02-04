@@ -2,9 +2,9 @@ language: cpp
 
 dist: xenial
 
-compiler:
-#  - clang # TODO
-  - gcc
+#compiler:
+##  - clang # TODO
+#  - gcc
 
 git:
   depth: false

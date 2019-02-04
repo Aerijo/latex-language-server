@@ -19,9 +19,8 @@ addons:
       - g++-8
       - cmake
 
-# from https://github.com/richelbilderbeek/travis_gcc_cpp17/blob/master/.travis.yml
 before_install:
-  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules # convert SSH to HTTPS
   - git submodule update --init --recursive
 
 install:
@@ -33,7 +32,9 @@ script:
   - sudo ln -s /usr/bin/g++-8 /usr/local/bin/g++
   - export CC=/usr/bin/gcc-8
   - export CXX=/usr/bin/g++-8
-  - gcc -v && g++ -v && cmake --version
+  - gcc --version
+  - g++ --version
+  - cmake --version
   - mkdir cmake-build-debug
   - cd cmake-build-debug
   - cmake ..

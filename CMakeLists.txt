@@ -3,7 +3,11 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lstdc++fs -std=c++17 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall")
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
 
@@ -14,7 +18,6 @@ add_compile_definitions(SUPPORT_JIT)
 add_executable(latex_language_server
         src/main.cpp
         src/lconfig.h
-
 
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ThreadedQueue.h
@@ -97,4 +100,10 @@ target_include_directories(latex_language_server PRIVATE
         third_party/superstring/vendor/libcxx
         third_party/superstring/vendor/pcre2-10.32/src)
 
-target_link_libraries(${PROJECT_NAME} stdc++fs) # TODO: Support Clang build
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_link_libraries(${PROJECT_NAME} stdc++fs)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_link_libraries(${PROJECT_NAME} stdc++fs)
+endif()

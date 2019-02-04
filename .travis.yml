@@ -7,9 +7,12 @@ branches:
   except:
   - dev
   - experimental
+compiler:
+- clang
+- gcc
 os:
 - linux
-- osx
+#- osx
 addons:
   apt:
     sources:
@@ -21,8 +24,6 @@ addons:
 before_install:
 - git submodule update --init --recursive
 script:
-#- sudo ln -s /usr/bin/gcc-8 /usr/local/bin/gcc
-#- sudo ln -s /usr/bin/g++-8 /usr/local/bin/g++
 - export CC=/usr/bin/gcc-8
 - export CXX=/usr/bin/g++-8
 - gcc --version

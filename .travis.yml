@@ -25,4 +25,4 @@ script:
   - mkdir cmake-build-debug
   - cd cmake-build-debug
   - cmake ..
-  - cmake --build .
+  - cmake --build . --target latex_language_server

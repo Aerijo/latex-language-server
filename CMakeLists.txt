@@ -17,10 +17,7 @@ add_executable(latex_language_server
 
         src/lsp-tools/QueueManager.cpp
         src/lsp-tools/ThreadedQueue.h
-        src/lsp-tools/Handler.h
-        src/lsp-tools/definitions.h
         src/lsp-tools/MessageHandler.cpp
-        src/lsp-tools/handlerRegistration.h
         src/lsp-tools/messaging.cpp
         src/lsp-tools/HandlerManager.cpp
 
@@ -70,25 +67,20 @@ add_executable(latex_language_server
 
         src/lsp-tools/definitions.cpp
         src/handlers/file/FileChangeHandler.cpp
-        src/handlers/file/FileChangeHandler.h
         src/handlers/hover/HoverHandler.cpp
-        src/handlers/hover/HoverHandler.h
         src/handlers/ShutDownHandler.cpp
-        src/handlers/ShutDownHandler.h
         src/handlers/autocomplete/CompletionProvider.cpp
-        src/handlers/autocomplete/CompletionProvider.h
         src/filesystem/FileManager.cpp
-        src/filesystem/FileManager.h
         src/handlers/file/FileOpenHandler.cpp
-        src/handlers/file/FileOpenHandler.h
         src/handlers/file/FileCloseHandler.cpp
-        src/handlers/file/FileCloseHandler.h
         src/handlers/file/FileSaveHandler.cpp
-        src/handlers/file/FileSaveHandler.h
         src/filesystem/File.cpp
-        src/filesystem/File.h
         src/filesystem/Uri.cpp
-        src/filesystem/Uri.h src/filesystem/UtfHandler.cpp src/filesystem/UtfHandler.h src/filesystem/TextBufferInput.cpp src/filesystem/TextBufferInput.h src/biber/BibManager.cpp src/biber/BibManager.h src/biber/BibIndexer.cpp src/biber/BibIndexer.h src/biber/Style.cpp src/biber/Style.h)
+        src/filesystem/UtfHandler.cpp
+        src/filesystem/TextBufferInput.cpp
+        src/biber/BibManager.cpp
+        src/biber/BibIndexer.cpp
+        src/biber/Style.cpp)
 
 target_include_directories(latex_language_server PRIVATE
         src
@@ -105,4 +97,4 @@ target_include_directories(latex_language_server PRIVATE
         third_party/superstring/vendor/libcxx
         third_party/superstring/vendor/pcre2-10.32/src)
 
-target_link_libraries(${PROJECT_NAME} stdc++fs)
+target_link_libraries(${PROJECT_NAME} stdc++fs) # TODO: Support Clang build

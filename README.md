@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Aerijo/latex-language-server.svg?branch=master)](https://travis-ci.org/Aerijo/latex-language-server)
 # latex-language-server
 Language server to provide various LaTeX tools
 

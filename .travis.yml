@@ -17,6 +17,7 @@ addons:
     - cmake
 before_install:
 - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+- git add -A && git commit -m "convert .gitmodules"
 - git submodule update --init --recursive
 install:
 - sudo apt-get install -qq g++-8
@@ -31,9 +32,9 @@ script:
 - cmake --version
 - script/build.sh
 - pwd
-- cat .gitmodules
 deploy:
   provider: releases
+  skip_cleanup: true
   api_key:
     secure: szFQqOWlOdLwr5GkUTnexs0mcAfSiscXi2HmPPnQchr5xZcbt8NBjUQGdf8AHQgX0WNRqvlb2hlGqkGvXRd+HoOV5oM4v+ZAzdRGZgh+CyabljNN81B3Ho20BPipcieFRTLnXTmW7bOkLZ2hqSgLV46SNuHzrfXAF14MOCqB6GuHN68UloPN1MfhkLbAY2TPGo+GFwIsfpiWPgW23ejvyr+h8JRFQtjf18mHJCjqtzcLGMdsdrycc2XVrXewqRL4qwcMbRSJFaUfu4lGV1kC1E63BQFJZPWoPMIJQczbWx6WR4e9lqTW9L1tOO+R8FSjJTr3Eq5VeN+Zp09HrWwde/6C+qC6jlxptluSafZ36i0gN0aS60sjvGo7lGFY3cXNQtEmkkNDfEy4+K4Amy/tVguEgpbXQWMpq4we0yaLoBKw0lBPAZGA5kY4vh54Sby2XfhNmXCJs2KHqNLMZ2Qrd23Xntd5MMW+pzmoko1BH5cXKI5/59Hk1KBmYSINqp4ydYdttb/4G4W67j57xexUi0O3yComu3q1M3JM1Ay12m5CQc+LnazqxIjXXGcw+oMoWQRkjHFexqf82kRVTEJtaWyCPEIOfPrcwky3B+Kz8n5p5JorQ4Lk/8eJhAfu8vmjn8CJwsVCfLTX67x4XG/AN/EpRDzWDLPwkFbHACtvexY=
   file: cmake-build-debug/latex_language_server

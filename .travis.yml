@@ -7,6 +7,9 @@ branches:
   except:
   - dev
   - experimental
+os:
+- linux
+- osx
 addons:
   apt:
     sources:
@@ -31,7 +34,6 @@ script:
 - g++ --version
 - cmake --version
 - script/build.sh
-- pwd
 deploy:
   provider: releases
   skip_cleanup: true

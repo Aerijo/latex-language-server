@@ -24,6 +24,5 @@ install:
 script:
   - mkdir cmake-build-debug
   - cd cmake-build-debug
-  - cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+  - cmake ..
   - cmake --build .
-  - cmake --build cmake-build-debug --target latex_language_server

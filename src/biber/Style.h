@@ -7,6 +7,7 @@
 #include <optional.h>
 #include <rapidxml.hpp>
 #include <vector>
+#include <optional>
 #include <filesystem/UtfHandler.h>
 
 /*

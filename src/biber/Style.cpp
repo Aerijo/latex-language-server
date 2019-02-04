@@ -38,8 +38,9 @@ using std::strcmp;
  */
 
 #define IS(input) strcmp(name + 4, input) == 0 // all names start with `bcf:`
-#define EXPECT_NAME(node, input) assert(strcmp(node->name(), input) == 0)
-#define EXPECT_VAL(node, input) assert(strcmp(node->value(), input) == 0)
+#define EXPECT_NAME(node, input) if (strcmp(node->name(), input) != 0) throw std::logic_error("Unexpected node name")
+#define EXPECT_VAL(node, input) if (strcmp(node->value(), input) != 0) throw std::logic_error("Unexpected value name")
+#define ASSERT(result) if (!(result)) throw std::logic_error("Unexpected result")
 
 std::ostream &operator << (std::ostream &out, const Field &field) {
     out << utf.utf16to8(field.name);
@@ -364,7 +365,7 @@ void Style::parseEntryTypes (xml_node<> *def) {
             entry.skipOut = true;
         }
 
-        assert(entries.count(name) == 0);
+        ASSERT(entries.count(name) == 0);
         entries.insert({ name, entry });
     }
 }
@@ -384,7 +385,7 @@ void Style::parseFields (xml_node<> *def, unordered_map<u16string, Field> &field
                 if (attrVal == "field") {
                     field.type = Field::Type::Field;
                 } else {
-                    assert(attrVal == "list");
+                    ASSERT(attrVal == "list");
                     field.type = Field::Type::List;
                 }
             } else if (attrName == "datatype") {
@@ -479,7 +480,7 @@ void extractMandatoryConstraint (TempConstraintData &tempConstraint, xml_node<> 
                 fields.emplace_back(utf.utf8to16(field->value()));
             }
         } else {
-            assert(IS("fieldxor"));
+            ASSERT(IS("fieldxor"));
             vector<u16string> &fields = mandatory.one.emplace_back(vector<u16string> {});
             for (xml_node<> *field = child->first_node(); field; field = field->next_sibling()) {
                 fields.emplace_back(utf.utf8to16(field->value()));
@@ -502,7 +503,7 @@ void extractConditionalConstraint (TempConstraintData &tempConstraint, xml_node<
         } else if (attrVal == "one") {
             quant = ConditionalConstraint::Quant::One;
         } else {
-            assert(attrVal == "none");
+            ASSERT(attrVal == "none");
             quant = ConditionalConstraint::Quant::None;
         }
 
@@ -550,7 +551,7 @@ void extractDataConstraint (TempConstraintData &tempConstraint, xml_node<> *node
         } else if (name == "pattern") {
             data.pattern = val;
         } else {
-            assert(name == "type");
+            ASSERT(name == "type");
         }
     }
 
@@ -571,7 +572,7 @@ void Style::parseConstraints (xml_node<> *def, vector<TempConstraintData> &const
         } else {
             EXPECT_NAME(node, "bcf:constraint");
             auto *attr = node->first_attribute();
-            assert(attr != nullptr);
+            ASSERT(attr != nullptr);
 
             string attrVal = attr->value();
 
@@ -582,7 +583,7 @@ void Style::parseConstraints (xml_node<> *def, vector<TempConstraintData> &const
             } else if (attrVal == "conditional") {
                 extractConditionalConstraint(tempConstraint, node);
             } else {
-                assert(attrVal == "data");
+                ASSERT(attrVal == "data");
                 extractDataConstraint(tempConstraint, node);
             }
         }

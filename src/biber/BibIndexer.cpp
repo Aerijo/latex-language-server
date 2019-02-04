@@ -161,7 +161,11 @@ void locateAndBuildBiberStyle (File *file) {
 
     if (!controlFilePath.empty()) {
         delete g_config->bibtex.style;
-        g_config->bibtex.style = new Style::Style(controlFilePath);
+        try {
+            g_config->bibtex.style = new Style::Style(controlFilePath);
+        } catch (...) {
+            std::cerr << "Failed to parse Biber control file (.bcf)\n";
+        }
     }
 }
 

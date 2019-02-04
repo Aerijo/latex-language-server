@@ -692,11 +692,8 @@ template<typename T>
 vector<T> removeOccurrences (vector<T> &input, vector<T> toRemove) {
     vector<T> newList {};
     for (auto &elem : input) {
-        std::cerr << "Testing " << elem << "\n";
         if (!contains(toRemove, elem)) {
             newList.push_back(elem);
-        } else {
-            std::cerr << "Removing " << elem << "\n";
         }
     }
 
@@ -752,7 +749,6 @@ void addFieldAlias (Entry &entry, const u16string &alias, const u16string &actua
 
 void Style::applySourcemaps (vector<SourceMap> sourcemaps) {
     for (SourceMap &sourcemap : sourcemaps) {
-        std::cerr << sourcemap << "\n";
         for (const auto &pair : sourcemap.entryAliases) {
             const u16string &alias = pair.first;
             const u16string &actual = pair.second;

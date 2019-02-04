@@ -1,14 +1,18 @@
 #include <tree_sitter/parser.h>
 #include "BibIndexer.h"
 
+#include <filesystem>
 #include <stack>
 #include <lsp-tools/messaging.h>
+#include <lconfig.h>
 
 extern "C" {
     TSLanguage *tree_sitter_biber();
 }
 
 using std::stack;
+
+namespace fs = std::filesystem;
 
 void makeLowerCase (u16string &input) {
     // TODO: Full unicode support (but ASCII should be adequate for bibtex compliant sources)
@@ -80,19 +84,13 @@ void BibIndexer::completeIndex () {
     const TSTree *tree = file->getParseTree();
     assert (tree != nullptr);
 
-    std::cerr << "reindexing bib file " << file->getPath() << "\n";
-
     TSNode rootNode = ts_tree_root_node(tree);
 
     lintErrors(rootNode);
 
     lintFile(rootNode);
 
-    std::cerr << "found " << issues.size() << " issues...\n";
-
     publishErrors();
-
-    std::cerr << "published errors\n";
 }
 
 void BibIndexer::partialReindex (Point &changesStart) {
@@ -138,11 +136,43 @@ enum Sym {
     SymString = 36
 };
 
-void BibIndexer::lintFile (TSNode rootNode) {
-    std::cerr << "Fully linting bib file " << file->getPath() << "\n";
 
+// See locate_data_file in Biber/Utils.pm for how it should work to match Biber
+void locateAndBuildBiberStyle (File *file) {
+    if (!file->isBibtex()) return;
+
+    fs::path filePath ( file->getPath() );
+
+    std::cerr << filePath << "\n";
+
+    auto directory = filePath.parent_path();
+
+    std::cerr << "Dir is " << directory << "\n";
+
+    if (!fs::exists(directory)) return;
+
+    std::cerr << "Searching dir " << directory << " for style\n";
+    string controlFilePath {};
+    for (auto &p : fs::directory_iterator(directory)) {
+        if (p.path().extension() == ".bcf") {
+            controlFilePath = p.path();
+        }
+    }
+
+    if (!controlFilePath.empty()) {
+        delete g_config->bibtex.style;
+        g_config->bibtex.style = new Style::Style(controlFilePath);
+    }
+}
+
+void BibIndexer::lintFile (TSNode rootNode) {
     if (style == nullptr) {
-        std::cerr << "Cannot analyse bib file without style!\n"; // though can do keys and such...
+        locateAndBuildBiberStyle(file);
+        style = g_config->bibtex.style;
+        if (style == nullptr) {
+            std::cerr << "Cannot analyse bib file without style!\n"; // though can do keys and such...
+            return;
+        }
     }
 
     auto num_children = ts_node_child_count(rootNode);

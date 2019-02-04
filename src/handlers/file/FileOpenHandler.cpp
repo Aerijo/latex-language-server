@@ -5,6 +5,8 @@
 #include <lconfig.h>
 #include "FileOpenHandler.h"
 
+
+
 void FileOpenHandler::run (optional<Value> &params) {
     if (!params) { handleMissingFileOpenParams(); return; }
 
@@ -13,8 +15,6 @@ void FileOpenHandler::run (optional<Value> &params) {
     Value &textDocument = value["textDocument"];
 
     string uri = textDocument["uri"].GetString();
-
-    std::cerr << "handling opening file " << uri << "\n";
 
     string languageId = textDocument["languageId"].GetString();
 
@@ -27,14 +27,6 @@ void FileOpenHandler::run (optional<Value> &params) {
     File *file = new File { uri, languageId, version, text };
 
     file->setupParser();
-
-    /*
-     * Steps to parse:
-     * 1. Create a TSInput
-     *  a. Make a TextBufferInput from snapshot slices (primitive_chunks should work)
-     *  b. Get it from ->input()
-     * 2. With this, the parser, and the old tree, call ts_parser_parse
-     */
 
     FileManager::add(uri, file);
 

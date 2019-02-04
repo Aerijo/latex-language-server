@@ -11,8 +11,6 @@ void registerAllHandlerCapabilities (Init::ServerCapabilities &capabilities) {
 }
 
 void InitializeHandler::run (Id &id, optional<Value> &params) {
-    std::cerr << "handling initialisation request...\n";
-
     INIT_WRITER
 
     ADD_ID(id);

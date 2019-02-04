@@ -97,13 +97,6 @@ void File::setTextInRange (Range &oldRange, std::u16string &&text) {
 
     if (hasParser) {
         executeParse();
-
-//        std::cerr << "Updated parse tree\n";
-//        TSNode root_node = ts_tree_root_node(tree);
-//
-//        char *string = ts_node_string(root_node);
-//
-//        std::cerr << "Syntax tree:\n" << string << "\n";
     }
 }
 
@@ -117,6 +110,11 @@ void File::setVersion (versionNum nextVersion) {
 
 void File::setText (std::string &&text) {
     buffer.set_text(utf.utf8to16(text));
+
+    if (hasParser) {
+        ts_tree_delete(tree);
+        executeParse();
+    }
 }
 
 File::~File () {
@@ -133,15 +131,13 @@ void File::executeParse () {
 
     TextBufferInput textBufferInput { &chunks };
 
-    tree = ts_parser_parse(parser, nullptr, textBufferInput.input());
+    tree = ts_parser_parse(parser, tree, textBufferInput.input());
 
     delete snapshot;
 }
 
 void File::setupParser () {
-    if (languageId != "biber" && languageId != "bibtex" && languageId != "tree biber") return;
-
-    std::cerr << "setting up parser for "; uri.print(); std::cerr << "\n";
+    if (languageId != "biber" && languageId != "bibtex") return;
 
     hasParser = true;
 
@@ -150,12 +146,6 @@ void File::setupParser () {
     ts_parser_set_language(parser, tree_sitter_biber());
 
     executeParse();
-
-    TSNode root_node = ts_tree_root_node(tree);
-
-    char *string = ts_node_string(root_node);
-
-    std::cerr << "Syntax tree:\n" << string << "\n";
 }
 
 TSTree *File::getParseTree () {

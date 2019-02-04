@@ -80,6 +80,10 @@ public:
     TSTree *getParseTree ();
 
     string getPath ();
+
+    bool isBibtex () {
+        return languageId == "bibtex" || languageId == "biber";
+    }
 };
 
 #endif //LATEX_LANGUAGE_SERVER_FILE_H

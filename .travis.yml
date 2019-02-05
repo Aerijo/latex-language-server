@@ -24,7 +24,7 @@ addons:
 before_install:
 - git submodule update --init --recursive
 script:
-- export CC=/usr/bin/gcc-8
+- export CC=/usr/bin/gcc-8 # TODO: allow clang
 - export CXX=/usr/bin/g++-8
 - gcc --version
 - g++ --version

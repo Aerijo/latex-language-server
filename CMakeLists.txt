@@ -5,10 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall")
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
 
 add_compile_definitions(HAVE_CONFIG_H)
@@ -99,10 +95,6 @@ target_include_directories(latex_language_server PRIVATE
         third_party/superstring/src/core
         third_party/superstring/vendor/libcxx
         third_party/superstring/vendor/pcre2-10.32/src)
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_link_libraries(${PROJECT_NAME} stdc++fs)
-endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_link_libraries(${PROJECT_NAME} stdc++fs)

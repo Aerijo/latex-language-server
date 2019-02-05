@@ -1,7 +1,7 @@
 #include <tree_sitter/parser.h>
 #include "BibIndexer.h"
 
-#include <experimental/filesystem>
+#include <filesystem>
 #include <stack>
 #include <lsp-tools/messaging.h>
 #include <lconfig.h>
@@ -12,7 +12,7 @@ extern "C" {
 
 using std::stack;
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 void makeLowerCase (u16string &input) {
     // TODO: Full unicode support (but ASCII should be adequate for bibtex compliant sources)

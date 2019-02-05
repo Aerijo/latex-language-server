@@ -4,6 +4,11 @@ Language server to provide various LaTeX tools
 
 You're currently looking at the most complicated package ever to detect syntax errors in `.bib` files. More features are planned.
 
+LOOKING FOR:
+- Someone to set up the build system (Travis CI) to compile with Clang, and on macOS & Windows.
+    Nothing about this project should be restricted to GCC, I was just unable to link the filesystem
+    library with Clang and don't know anything about building it on Windows.
+
 TODO: 
 - Convert all JSON receiving to SAX instead of DOM; have handlers provide a reader
 - Find and fix all memory leaks (our Tree-sitter handling likely has a few)

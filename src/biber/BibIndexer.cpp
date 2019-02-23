@@ -94,7 +94,7 @@ void BibIndexer::completeIndex () {
 }
 
 void BibIndexer::partialReindex (Point &changesStart) {
-
+    // TODO
 }
 
 void BibIndexer::clearCached () {
@@ -107,7 +107,7 @@ void BibIndexer::clearCached () {
 void BibIndexer::publishErrors () {
     INIT_WRITER
 
-    writer.Key("method"); writer.String("textDocument/publishDiagnostics");
+    ADD_METHOD("textDocument/publishDiagnostics");
 
     writer.Key("params"); writer.StartObject();
         writer.Key("uri"); writer.String(file->getPath());

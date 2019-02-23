@@ -47,6 +47,22 @@ typedef int_fast64_t versionNum;
     writer.Key("id"); \
     id.writeId(writer)
 
+#define ADD_POINT(point) \
+    writer.StartObject(); \
+    writer.Key("line"); \
+    writer.Uint64(point.row); \
+    writer.Key("character"); \
+    writer.Uint64(point.column); \
+    writer.EndObject()
+
+#define ADD_RANGE(range) \
+    writer.StartObject(); \
+    writer.Key("start"); \
+    ADD_POINT(range.start); \
+    writer.Key("end"); \
+    ADD_POINT(range.end); \
+    writer.EndObject()
+
 #define ADD_TS_POINT(point) \
     writer.StartObject(); \
     writer.Key("line"); \

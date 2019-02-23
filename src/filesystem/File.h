@@ -53,7 +53,7 @@ public:
         Blg,
         Bst,
         Other // support arbitrary files if necessary (using language ID)
-    };
+    } type;
 
     bool operator == (File &that);
 

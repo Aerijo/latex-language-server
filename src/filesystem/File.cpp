@@ -1,7 +1,10 @@
 #include "File.h"
 #include "TextBufferInput.h"
 
-extern "C" { TSLanguage *tree_sitter_biber(); }
+extern "C" {
+    TSLanguage *tree_sitter_biber();
+    TSLanguage *tree_sitter_latex();
+}
 
 using std::u16string;
 
@@ -9,11 +12,21 @@ bool File::operator == (File &that) {
     return uri == that.uri;
 }
 
-File::File (Uri::Uri &uri, string &languageId, string &text) : uri { uri }, languageId { languageId } {
+File::Type getFileTypeFromLanguageId (string &languageId) {
+    if (languageId == "bibtex" || languageId == "biber") {
+        return File::Type::Bib;
+    } else if (languageId == "latex" || languageId == "latex2e") {
+        return File::Type::Tex;
+    }
+
+    return File::Type::Other;
+}
+
+File::File (Uri::Uri &uri, string &languageId, string &text) : uri { uri }, languageId { languageId }, type { getFileTypeFromLanguageId(languageId) } {
     buffer.set_text(utf.utf8to16(text));
 }
 
-File::File (string &uri, string &languageId, versionNum version, string &text) : uri { Uri::Uri::parse(uri) }, languageId { languageId }, version { version } {
+File::File (string &uri, string &languageId, versionNum version, string &text) : uri { Uri::Uri::parse(uri) }, languageId { languageId }, version { version }, type { getFileTypeFromLanguageId(languageId) } {
     buffer.set_text(utf.utf8to16(text));
 }
 
@@ -137,14 +150,19 @@ void File::executeParse () {
 }
 
 void File::setupParser () {
-    if (languageId != "biber" && languageId != "bibtex") return;
+    switch (type) {
+        case File::Type::Bib:
+            parser = ts_parser_new();
+            ts_parser_set_language(parser, tree_sitter_biber());
+            break;
+        case File::Type::Tex:
+            parser = ts_parser_new();
+            ts_parser_set_language(parser, tree_sitter_latex());
+            break;
+        default: return;
+    }
 
     hasParser = true;
-
-    parser = ts_parser_new();
-
-    ts_parser_set_language(parser, tree_sitter_biber());
-
     executeParse();
 }
 

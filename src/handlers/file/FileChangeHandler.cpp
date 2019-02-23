@@ -4,6 +4,7 @@
 #include <fstream>
 #include <lconfig.h>
 #include "FileChangeHandler.h"
+#include "lsp-tools/utils.h"
 
 void FileChangeHandler::registerCapabilities (Init::ServerCapabilities &capabilities) {
     if (!capabilities.textDocumentSync) capabilities.textDocumentSync = Init::TextDocumentSyncOptions {};
@@ -19,18 +20,6 @@ void FileChangeHandler::registerCapabilities (Init::ServerCapabilities &capabili
 
 optional<string> findBiberDataModel () {
     return optional { std::string { "../test/resources/project1/main.bcf" } };
-}
-
-Range getRangeFromJSON (Value &range) {
-    Value &start = range["start"];
-    Value &end = range["end"];
-
-    unsigned startLine = start["line"].GetUint();
-    unsigned startChar = start["character"].GetUint();
-    unsigned endLine = end["line"].GetUint();
-    unsigned endChar = end["character"].GetUint();
-
-    return Range { { startLine, startChar }, { endLine, endChar } };
 }
 
 void FileChangeHandler::run (optional<Value> &params) {
@@ -79,12 +68,11 @@ void FileChangeHandler::run (optional<Value> &params) {
         }
     }
 
-    if (file->hasParser) {
+    if (file->type == File::Type::Bib && file->hasParser) {
         auto datamodel = findBiberDataModel();
 
         if (datamodel) {
             BibIndexer indexer { file, g_config->bibtex.style };
-
             indexer.completeIndex();
         }
     }

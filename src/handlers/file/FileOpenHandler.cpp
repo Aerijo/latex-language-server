@@ -30,12 +30,11 @@ void FileOpenHandler::run (optional<Value> &params) {
 
     FileManager::add(uri, file);
 
-    if (file->hasParser) {
+    if (file->type == File::Type::Bib && file->hasParser) {
         BibIndexer indexer { file, g_config->bibtex.style };
 
         indexer.completeIndex();
     }
-
 }
 
 void FileOpenHandler::handleMissingFileOpenParams () {

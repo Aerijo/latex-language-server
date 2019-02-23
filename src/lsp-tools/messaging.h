@@ -21,7 +21,7 @@ void sendMessage (Document &message);
 
 void cancelRequest (Id &id);
 
-void sendError (Id *id, ResponseHandler::ErrorCode code, string message, Value *data = nullptr);
+void sendError (Id *id, ResponseHandler::ErrorCode code, const string message, Value *data = nullptr);
 
 void sendError (Id *id, ResponseHandler::ErrorCode code, const char *message, Value *data = nullptr);
 

@@ -27,6 +27,14 @@ add_executable(latex_language_server
 
         third_party/tree-sitter-biber/src/parser.c
 
+        third_party/tree-sitter-latex/src/catcode.cc
+        third_party/tree-sitter-latex/src/parser.c
+        third_party/tree-sitter-latex/src/scanner_control_sequences.cc
+        third_party/tree-sitter-latex/src/scanner_environments.cc
+        third_party/tree-sitter-latex/src/scanner_keywords.cc
+        third_party/tree-sitter-latex/src/scanner_names.cc
+        third_party/tree-sitter-latex/src/scanner.cc
+
         third_party/superstring/vendor/pcre2-10.32/src/pcre2_auto_possess.c
         third_party/superstring/vendor/pcre2-10.32/src/pcre2_chartables.c
         third_party/superstring/vendor/pcre2-10.32/src/pcre2_compile.c
@@ -80,7 +88,7 @@ add_executable(latex_language_server
         src/filesystem/TextBufferInput.cpp
         src/biber/BibManager.cpp
         src/biber/BibIndexer.cpp
-        src/biber/Style.cpp)
+        src/biber/Style.cpp src/lsp-tools/utils.cpp src/lsp-tools/utils.h)
 
 target_include_directories(latex_language_server PRIVATE
         src)
@@ -92,6 +100,7 @@ target_include_directories(latex_language_server PRIVATE
         third_party/tree-sitter/src
         third_party/tree-sitter/externals/utf8proc
         third_party/tree-sitter-biber/src
+        third_party/tree-sitter-latex/src
         third_party/superstring/src/core
         third_party/superstring/vendor/libcxx
         third_party/superstring/vendor/pcre2-10.32/src)

@@ -26,6 +26,8 @@ int main (int argc, char** argv, const char** env) {
     FileManager::init();
     QueueManager::init();
 
+    
+
     auto messageHandler = new MessageHandler();
 
     messageHandler->init();

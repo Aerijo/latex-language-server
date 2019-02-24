@@ -1,0 +1,81 @@
+cmake_minimum_required(VERSION 3.13)
+project(superstring)
+
+set(CMAKE_CXX_STANDARD 17)
+
+include_directories(src/core)
+include_directories(vendor)
+include_directories(vendor/libcxx)
+include_directories(vendor/pcre2-10.32/src)
+include_directories(vendor/pcre2-10.32/src/sljit)
+
+add_executable(superstring
+        src/core/encoding-conversion.cc
+        src/core/encoding-conversion.h
+        src/core/flat_set.h
+        src/core/libmba-diff.cc
+        src/core/libmba-diff.h
+        src/core/marker-index.cc
+        src/core/marker-index.h
+        src/core/optional.h
+        src/core/patch.cc
+        src/core/patch.h
+        src/core/point.cc
+        src/core/point.h
+        src/core/range.cc
+        src/core/range.h
+        src/core/regex.cc
+        src/core/regex.h
+        src/core/serializer.h
+        src/core/text-buffer.cc
+        src/core/text-buffer.h
+        src/core/text-diff.cc
+        src/core/text-diff.h
+        src/core/text-slice.cc
+        src/core/text-slice.h
+        src/core/text.cc
+        src/core/text.h
+        vendor/libcxx/utf8-conversions.h
+        vendor/pcre2-10.32/src/config.h
+        vendor/pcre2-10.32/src/dftables.c
+        vendor/pcre2-10.32/src/pcre2.h
+        vendor/pcre2-10.32/src/pcre2_auto_possess.c
+        vendor/pcre2-10.32/src/pcre2_chartables.c
+        vendor/pcre2-10.32/src/pcre2_compile.c
+        vendor/pcre2-10.32/src/pcre2_config.c
+        vendor/pcre2-10.32/src/pcre2_context.c
+        vendor/pcre2-10.32/src/pcre2_convert.c
+        vendor/pcre2-10.32/src/pcre2_dfa_match.c
+        vendor/pcre2-10.32/src/pcre2_error.c
+        vendor/pcre2-10.32/src/pcre2_extuni.c
+        vendor/pcre2-10.32/src/pcre2_find_bracket.c
+        vendor/pcre2-10.32/src/pcre2_fuzzsupport.c
+        vendor/pcre2-10.32/src/pcre2_internal.h
+        vendor/pcre2-10.32/src/pcre2_intmodedep.h
+        vendor/pcre2-10.32/src/pcre2_jit_compile.c
+        vendor/pcre2-10.32/src/pcre2_jit_match.c
+        vendor/pcre2-10.32/src/pcre2_jit_misc.c
+        vendor/pcre2-10.32/src/pcre2_jit_test.c
+        vendor/pcre2-10.32/src/pcre2_maketables.c
+        vendor/pcre2-10.32/src/pcre2_match.c
+        vendor/pcre2-10.32/src/pcre2_match_data.c
+        vendor/pcre2-10.32/src/pcre2_newline.c
+        vendor/pcre2-10.32/src/pcre2_ord2utf.c
+        vendor/pcre2-10.32/src/pcre2_pattern_info.c
+        vendor/pcre2-10.32/src/pcre2_printint.c
+        vendor/pcre2-10.32/src/pcre2_serialize.c
+        vendor/pcre2-10.32/src/pcre2_string_utils.c
+        vendor/pcre2-10.32/src/pcre2_study.c
+        vendor/pcre2-10.32/src/pcre2_substitute.c
+        vendor/pcre2-10.32/src/pcre2_substring.c
+        vendor/pcre2-10.32/src/pcre2_tables.c
+        vendor/pcre2-10.32/src/pcre2_ucd.c
+        vendor/pcre2-10.32/src/pcre2_ucp.h
+        vendor/pcre2-10.32/src/pcre2_valid_utf.c
+        vendor/pcre2-10.32/src/pcre2_xclass.c
+        vendor/pcre2-10.32/src/pcre2demo.c
+        vendor/pcre2-10.32/src/pcre2grep.c
+        vendor/pcre2-10.32/src/pcre2posix.c
+        vendor/pcre2-10.32/src/pcre2posix.h
+        vendor/pcre2-10.32/src/pcre2test.c
+        vendor/catch.hpp)

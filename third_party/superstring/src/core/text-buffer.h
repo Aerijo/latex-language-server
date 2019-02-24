@@ -56,8 +56,6 @@ public:
 
     void set_text_in_range (Range old_range, std::u16string &&);
 
-    void set_text_in_range (Range old_range, const std::u16string &);
-
     bool is_modified () const;
 
     bool has_astral ();

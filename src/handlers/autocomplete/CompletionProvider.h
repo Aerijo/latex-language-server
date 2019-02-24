@@ -3,6 +3,18 @@
 
 #include <lsp-tools/Handler.h>
 
+enum class PrefixType {
+    None,
+    TextCommand,
+    MathCommand,
+    Citation,
+    MathShift,
+    Magic,
+    Env,
+    Package,
+    Reference,
+};
+
 enum class InsertTextFormat {
     PlainText = 1,
     Snippet = 2

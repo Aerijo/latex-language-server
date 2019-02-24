@@ -1,10 +1,15 @@
 #include <iostream>
+#include <algorithm>
 #include <filesystem/FileManager.h>
 #include <lsp-tools/utils.h>
 #include "CompletionProvider.h"
 
 #include "lsp-tools/definitions.h"
 #include "lsp-tools/messaging.h"
+
+#include <pcre.h>
+
+#define PREFIX_MAX_LENGTH 100
 
 void sendNullResult (Id &id) {
     INIT_WRITER
@@ -25,7 +30,10 @@ void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabil
     capabilities.completionProvider->triggerCharacters = { "\\", "@", "!" };
 }
 
-vector<TSNode> getNodeTreeForPoint (TSNode rootNode, TSPoint point) {
+/*
+ * The path returned is going most -> least specific, and excludes the root node.
+ */
+vector<TSNode> getNodePathForPoint (TSNode rootNode, TSPoint point) {
     vector<TSNode> nodes {};
 
     TSNode node = ts_node_named_descendant_for_point_range(rootNode, point, point);
@@ -38,7 +46,7 @@ vector<TSNode> getNodeTreeForPoint (TSNode rootNode, TSPoint point) {
     return nodes;
 }
 
-void printNodeTree (vector<TSNode> &nodes) {
+void printNodes (vector<TSNode> &nodes) {
     std::cerr << "Nodes at cursor: ";
     for (auto node : nodes) {
         std::cerr << ts_node_type(node) << ", ";
@@ -46,43 +54,134 @@ void printNodeTree (vector<TSNode> &nodes) {
     std::cerr << "\n";
 }
 
-void addMathCompletions (CompletionList *completions, Range &range) {
-    string prefix { "math" };
+void addMathCompletions (CompletionList *completions, u16string &prefix, Range prefixRange) {
+    string prefixz { "math" };
     string body { "complicated $1 math" };
-    completions->addSnippet(prefix, body, range);
+    completions->addSnippet(prefixz, body, prefixRange);
 }
 
-Range getPrefixRange (File &file, TSPoint &tsPoint) {
-    auto endPoint = Point { tsPoint.row, tsPoint.column >> 1 };
-    auto startPoint = endPoint;
-
-    auto lineStart = file.textInRange({ { endPoint.row, 0 }, endPoint });
 
 
-    auto rend = lineStart.rend();
-    for (auto ritr = lineStart.rbegin(); ritr != rend; ritr++, startPoint.column--) {
-        auto c = *ritr;
-        if (!(iswalnum(c))) {
-            break;
+u16string getEnvPrefix (File &file, TSNode envNameNode, TSPoint tsPoint) {
+    return u"";
+}
+
+u16string getCitationPrefix (File &file, TSNode citationKeyNode, TSPoint tsPoint) {
+    return u"";
+}
+
+/*
+ * Gets all letters back from the cursor to a \, !, or @.
+ *
+ * Alternatively gets $ or $$ if they are the first characters,
+ * and will try all non space characters terminated with @ for a
+ * citation key
+ */
+u16string getTextPrefix (File &file, TSPoint tsPoint, PrefixType *type) {
+    auto cursorPosition = Point { tsPoint.row, tsPoint.column >> 1 };
+
+    // we only check the last PREFIX_MAX_LENGTH characters at most
+    unsigned startCol { 0 };
+    if (cursorPosition.column > PREFIX_MAX_LENGTH) {
+        startCol = cursorPosition.column - PREFIX_MAX_LENGTH;
+    }
+    auto candidateText = file.textInRange({ { cursorPosition.row, startCol }, cursorPosition });
+    auto i = candidateText.size();
+    if (i == 0) { return u""; }
+    auto c = candidateText[--i];
+
+    if (c == '$') {
+        *type = PrefixType::MathShift;
+        if (i > 0 && candidateText[--i] == '$') {
+            return u"$$";
+        }
+        return u"$";
+    }
+
+    for (; i >= 0; --i) {
+        c = candidateText[i];
+        if (iswalpha(c)) continue;
+        switch (c) {
+            case ' ':
+                return {};
+            case '\\':
+                *type = PrefixType::TextCommand;
+                return candidateText.substr(i, string::npos);
+            case '@':
+                *type = PrefixType::Citation;
+                return candidateText.substr(i, string::npos);
+            case '!':
+                *type = PrefixType::Magic;
+                return candidateText.substr(i, string::npos);
+            default: {}
+        }
+
+        --i;
+        break;
+    }
+
+    for (; i >= 0; --i) {
+        c = candidateText[i];
+        switch (c) {
+            case ' ':
+                return {};
+            case '@':
+                *type = PrefixType::Citation;
+                return candidateText.substr(i, string::npos);
+            default: {}
         }
     }
 
-    return Range { startPoint, endPoint };
+    return {};
 }
 
+bool isEnvironment (const char *type) {
+    size_t i = 0;
+    while (type[i] != '\0') i++;
+
+    if (i <= 4) return false;
+
+    return // ends with _env
+        type[--i] == '_' &&
+        type[--i] == 'v' &&
+        type[--i] == 'n' &&
+        type[--i] == 'e';
+}
+
+PrefixType identifyCompletionType (vector<TSNode> &nodePath) {
+    for (auto node : nodePath) {
+        const char *type = ts_node_type(node);
+        if (std::strcmp(type, "cite") == 0) {
+            return PrefixType::Citation;
+        } else if (isEnvironment(type)) {
+            return PrefixType::Env;
+        } else if (std::strcmp(type, "math") == 0) {
+            return PrefixType::MathCommand;
+        } else if (std::strcmp(type, "use") == 0) {
+            return PrefixType::Package;
+        } else if (std::strcmp(type, "ref") == 0) {
+            return PrefixType::Reference;
+        }
+    }
+
+    return PrefixType::None;
+}
+
+/*
+ * steps:
+ * 1. Identify completion type from node path at cursor (can find standard math, citation, reference, env, package here)
+ * 2. If text:
+ *    - Get prefix. This is (in reverse) word characters terminated by \ or !, or extended word characters terminated by @
+ */
 CompletionList* getLatexCompletionsForFileAndPoint (File &file, TSPoint &point) {
     auto *completions = new CompletionList {};
 
-    vector<TSNode> nodeTree = getNodeTreeForPoint(ts_tree_root_node(file.getParseTree()), point);
+    vector<TSNode> nodePath = getNodePathForPoint(ts_tree_root_node(file.getParseTree()), point);
+    printNodes(nodePath);
 
-    printNodeTree(nodeTree);
+    PrefixType type = identifyCompletionType(nodePath);
+    switch (type) {
 
-    for (auto node : nodeTree) {
-        if (strcmp("math", ts_node_type(node)) == 0) {
-            std::cerr << "adding math snippet\n";
-            Range replaceRange = getPrefixRange(file, point);
-            addMathCompletions(completions, replaceRange);
-        }
     }
 
     return completions;

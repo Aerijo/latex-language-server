@@ -48,7 +48,7 @@ void printNodeTree (vector<TSNode> &nodes) {
 
 void addMathCompletions (CompletionList *completions, Range &range) {
     string prefix { "math" };
-    string body { "complicated math" };
+    string body { "complicated $1 math" };
     completions->addSnippet(prefix, body, range);
 }
 
@@ -167,6 +167,7 @@ void CompletionItem::reflect (StringWriter &writer) {
     if (deprecated) {
         writer.Key("deprecated"); writer.Bool(deprecated);
     }
+    writer.Key("insertTextFormat"); writer.Int((int) format);
     writer.Key("textEdit"); textEdit.reflect(writer);
     writer.EndObject();
 }

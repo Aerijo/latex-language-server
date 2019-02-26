@@ -3,16 +3,26 @@
 
 #include <lsp-tools/Handler.h>
 
+#include "range.h"
+
 enum class PrefixType {
     None,
     TextCommand,
     MathCommand,
-    Citation,
+    Citation, // for \cite{...|}
+    CitationShort, // for @...|
     MathShift,
     Magic,
-    Env,
+    Env, // for \begin{...|}
+    EnvShort, // for #...|
     Package,
     Reference,
+};
+
+struct PrefixData {
+    PrefixType type { PrefixType::None };
+    Range range {};
+    string value {};
 };
 
 enum class InsertTextFormat {
@@ -41,9 +51,12 @@ struct CompletionItem { // snippet by default
 struct CompletionList {
     void reflect (StringWriter &writer);
 
-    void addSnippet (string &prefix, string &body, Range &range);
+    bool empty ();
+
+    void addSnippet (string prefix, string body, Range &range);
 
     bool isIncomplete { false }; // TODO: Support partial lists (when gathering from across files?)
+
     vector<CompletionItem> items {};
 };
 

@@ -88,7 +88,9 @@ add_executable(latex_language_server
         src/filesystem/TextBufferInput.cpp
         src/biber/BibManager.cpp
         src/biber/BibIndexer.cpp
-        src/biber/Style.cpp src/lsp-tools/utils.cpp src/lsp-tools/utils.h)
+        src/biber/Style.cpp
+        src/lsp-tools/utils.cpp
+        src/lsp-tools/utils.h)
 
 target_include_directories(latex_language_server PRIVATE
         src)

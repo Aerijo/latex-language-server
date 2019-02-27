@@ -112,7 +112,7 @@ PrefixData getTextPrefix (File &file, Point cursorPosition) {
     auto c = candidateText[i - 1];
 
     if (c == '$') {
-        if (i > 0 && candidateText[--i] == '$') {
+        if (i > 1 && candidateText[i - 2] == '$') {
             return { PrefixType::MathShift, { { cursorPosition.row, cursorPosition.column - 2 }, cursorPosition }, "$$" };
         }
         return { PrefixType::MathShift, Range { Point { cursorPosition.row, cursorPosition.column - 1 }, cursorPosition }, "$" };

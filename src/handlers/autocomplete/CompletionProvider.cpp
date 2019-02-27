@@ -47,18 +47,42 @@ void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixD
 
 void addShortEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
     std::cerr << "env name so far: " << prefix.value << "\n";
-
-    // TODO: Apply edit to closing delim too
-
+    
     completions.addSnippet("#document", "\\\\begin{document}\n\n$0\n\n\\\\end{document}", prefix.range);
     completions.addSnippet("#theorem", "\\\\begin{theorem}\n\t$0\n\\\\end{theorem}", prefix.range);
     completions.addSnippet("#proof", "\\\\begin{proof}\n\t$0\n\\\\end{proof}", prefix.range);
+    completions.addSnippet("#salign", "\\\\begin{align*}\n\t$0\n\\\\end{align*}", prefix.range);
+    completions.addSnippet("#align", "\\\\begin{align}\n\t$0\n\\\\end{align}", prefix.range);
 }
 
-void addCommandCompletions(CompletionList &completions, File &file, PrefixData &prefix) {
+void addCommandCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
     std::cerr << "command so far: " << prefix.value << "\n";
 
     completions.addSnippet("\\begin", "\\\\begin{$1}\n\t$0\n\\\\end{$1}", prefix.range);
+
+    std::cerr << "R:" << prefix.range.start.column << ":" << prefix.range.end.column << "\n";
+}
+
+void addMathShiftCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
+    std::cerr << "command so far: " << prefix.value << "\n";
+
+    string s = prefix.value.length() > 1 ? "a" : "c"; // TODO: Don't use hack
+
+    completions.addSnippet("$", "\\\\($1\\\\)$0", prefix.range, "b");
+    completions.addSnippet("$$", "\\\\[\n\t$0\n\\\\]", prefix.range, s);
+
+    std::cerr << "R:" << prefix.range.start.column << ":" << prefix.range.end.column << "\n";
+}
+
+string getRootForFile (File &file) {
+    return string { "./main.tex" };
+}
+
+void addMagicCommentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
+    std::cerr << "command so far: " << prefix.value << "\n";
+
+    completions.addSnippet("!root", "% !TEX root = " + getRootForFile(file), prefix.range);
+    completions.addSnippet("!engine", "% !TEX engine = ${0:pdflatex}", prefix.range);
 
     std::cerr << "R:" << prefix.range.start.column << ":" << prefix.range.end.column << "\n";
 }
@@ -88,12 +112,12 @@ CompletionList getLatexCompletionsForFileAndPoint (File &file, Point cursorPosit
         case PrefixType::EnvShort:
             addShortEnvironmentCompletions(completions, file, prefix);
             break;
-//        case PrefixType::Magic:
-//            addMagicCommentCompletions(completions, file, prefix);
-//            break;
-//        case PrefixType::MathShift:
-//            addMathShiftCompletions(completions, file, prefix);
-//            break;
+        case PrefixType::Magic:
+            addMagicCommentCompletions(completions, file, prefix);
+            break;
+        case PrefixType::MathShift:
+            addMathShiftCompletions(completions, file, prefix);
+            break;
         case PrefixType::TextCommand:
             addCommandCompletions(completions, file, prefix);
             break;
@@ -159,11 +183,25 @@ void CompletionList::reflect (StringWriter &writer) {
     writer.EndObject();
 }
 
-void CompletionList::addSnippet (string prefix, string body, Range &range) {
+void CompletionList::addSnippet (string prefix, string body, Range &range, string sortText) {
     CompletionItem snippet {};
     snippet.label = prefix;
 
     snippet.textEdit.newText = body;
+    snippet.textEdit.range = range;
+
+    if (!sortText.empty()) {
+        snippet.sortText = sortText;
+    }
+
+    items.emplace_back(snippet);
+}
+
+void CompletionList::addEnvironment (string &prefix, string &envName, Range &range) {
+    CompletionItem snippet {};
+    snippet.label = prefix;
+
+    snippet.textEdit.newText = "\\\\begin{" + envName + "}\n\t$0\n\\\\end{" + envName + "}";
     snippet.textEdit.range = range;
 
     items.emplace_back(snippet);
@@ -185,6 +223,9 @@ void CompletionItem::reflect (StringWriter &writer) {
     }
     if (deprecated) {
         writer.Key("deprecated"); writer.Bool(deprecated);
+    }
+    if (!sortText.empty()) {
+        writer.Key("sortText"); writer.String(sortText);
     }
     writer.Key("insertTextFormat"); writer.Int((int) format);
     writer.Key("textEdit"); textEdit.reflect(writer);

@@ -46,6 +46,7 @@ struct CompletionItem { // snippet by default
     bool deprecated { false };
     InsertTextFormat format { InsertTextFormat::Snippet };
     TextEdit textEdit {};
+    string sortText {};
 };
 
 struct CompletionList {
@@ -53,7 +54,9 @@ struct CompletionList {
 
     bool empty ();
 
-    void addSnippet (string prefix, string body, Range &range);
+    void addSnippet (string prefix, string body, Range &range, string sortText = "");
+
+    void addEnvironment (string &prefix, string &envName, Range &range);
 
     bool isIncomplete { false }; // TODO: Support partial lists (when gathering from across files?)
 

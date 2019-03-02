@@ -25,6 +25,8 @@ void sendError (Id *id, ResponseHandler::ErrorCode code, const string message, V
 
 void sendError (Id *id, ResponseHandler::ErrorCode code, const char *message, Value *data = nullptr);
 
+void sendNullResult (Id &id);
+
 void gotoNextHeader ();
 
 size_t readHeaders ();

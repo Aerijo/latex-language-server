@@ -302,7 +302,9 @@ namespace LConfig {
     };
 
     struct LatexConfig {
-
+        struct Extension {
+            bool headingSymbolKinds { false }; // if special symbols for outline view are supported
+        } extensions;
     };
 
     struct BibConfig {

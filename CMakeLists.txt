@@ -90,7 +90,11 @@ add_executable(latex_language_server
         src/biber/BibIndexer.cpp
         src/biber/Style.cpp
         src/lsp-tools/utils.cpp
-        src/lsp-tools/utils.h)
+        src/lsp-tools/utils.h
+        src/handlers/outline/OutlineHandler.cpp
+        src/handlers/outline/OutlineHandler.h
+        src/handlers/util.cpp
+        src/handlers/util.h)
 
 target_include_directories(latex_language_server PRIVATE
         src)

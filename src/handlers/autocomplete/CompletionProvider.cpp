@@ -8,15 +8,9 @@
 #include "lsp-tools/messaging.h"
 
 #include "./PrefixTools.cpp"
+#include "../util.h"
 
 //#include <pcre.h>
-
-void sendNullResult (Id &id) {
-    INIT_WRITER
-    ADD_ID(id);
-    ADD_NULL_RESULT();
-    SEND_MESSAGE
-}
 
 void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabilities) {
     if (!capabilities.completionProvider) capabilities.completionProvider = Init::CompletionOptions {};
@@ -33,8 +27,6 @@ void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabil
 }
 
 void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    std::cerr << "env name so far: " << prefix.value << "\n";
-
     // TODO: Apply edit to closing delim too
 
     completions.addSnippet("document", "document", prefix.range);
@@ -46,32 +38,32 @@ void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixD
 }
 
 void addShortEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    std::cerr << "env name so far: " << prefix.value << "\n";
-    
     completions.addSnippet("#document", "\\\\begin{document}\n\n$0\n\n\\\\end{document}", prefix.range);
     completions.addSnippet("#theorem", "\\\\begin{theorem}\n\t$0\n\\\\end{theorem}", prefix.range);
     completions.addSnippet("#proof", "\\\\begin{proof}\n\t$0\n\\\\end{proof}", prefix.range);
     completions.addSnippet("#salign", "\\\\begin{align*}\n\t$0\n\\\\end{align*}", prefix.range);
     completions.addSnippet("#align", "\\\\begin{align}\n\t$0\n\\\\end{align}", prefix.range);
+    completions.addSnippet("#list", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
+    completions.addSnippet("#itemize", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
+    completions.addSnippet("#enumerate", "\\\\begin{enumerate}\n\t\\\\item $0\n\\\\end{enumerate}", prefix.range);
+    completions.addSnippet("#description", "\\\\begin{description}\n\t\\\\item[$1] $0\n\\\\end{description}", prefix.range);
 }
 
 void addCommandCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    std::cerr << "command so far: " << prefix.value << "\n";
-
     completions.addSnippet("\\begin", "\\\\begin{$1}\n\t$0\n\\\\end{$1}", prefix.range);
-
-    std::cerr << "R:" << prefix.range.start.column << ":" << prefix.range.end.column << "\n";
+    completions.addSnippet("\\section", "\\\\section{$1}\n$0", prefix.range);
+    completions.addSnippet("\\subsection", "\\\\subsection{$1}\n$0", prefix.range);
+    completions.addSnippet("\\subsubsection", "\\\\subsubsection{$1}\n$0", prefix.range);
+    completions.addSnippet("\\paragraph", "\\\\paragraph{$1}\n$0", prefix.range);
+    completions.addSnippet("\\subparagraph", "\\\\subparagraph{$1}\n$0", prefix.range);
+    completions.addSnippet("\\chapter", "\\\\chapter{$1}\n$0", prefix.range);
+    completions.addSnippet("\\part", "\\\\part{$1}\n$0", prefix.range);
+    completions.addCommand("\\phi", prefix.range);
 }
 
 void addMathShiftCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    std::cerr << "command so far: " << prefix.value << "\n";
-
-    string s = prefix.value.length() > 1 ? "a" : "c"; // TODO: Don't use hack
-
     completions.addSnippet("$", "\\\\($1\\\\)$0", prefix.range, "b");
-    completions.addSnippet("$$", "\\\\[\n\t$0\n\\\\]", prefix.range, s);
-
-    std::cerr << "R:" << prefix.range.start.column << ":" << prefix.range.end.column << "\n";
+    completions.addSnippet("$$", "\\\\[\n\t$0\n\\\\]", prefix.range, prefix.value.length() > 1 ? "a" : "c"); // TODO: Don't use hack
 }
 
 string getRootForFile (File &file) {
@@ -90,12 +82,9 @@ void addMagicCommentCompletions (CompletionList &completions, File &file, Prefix
 CompletionList getLatexCompletionsForFileAndPoint (File &file, Point cursorPosition) {
     PrefixData prefix = getPrefixData(file, cursorPosition);
 
-
-
     CompletionList completions {};
     switch (prefix.type) {
         case PrefixType::None:
-            std::cerr << "No prefix\n";
             return completions;
 //        case PrefixType::Citation:
 //            addCitationCompletions(completions, file, prefix);
@@ -124,6 +113,7 @@ CompletionList getLatexCompletionsForFileAndPoint (File &file, Point cursorPosit
 //        case PrefixType::MathCommand:
 //            addMathCompletions(completions, file, prefix);
 //            break;
+        default: {}
     }
 
     return completions;
@@ -160,8 +150,6 @@ void CompletionProvider::run (Id &id, optional<Value> &paramsOpt) {
             return;
     }
 
-    std::cerr << "Sending " << completions.items.size() << " completions\n";
-
     if (completions.empty()) {
         sendNullResult(id);
     } else {
@@ -183,7 +171,7 @@ void CompletionList::reflect (StringWriter &writer) {
     writer.EndObject();
 }
 
-void CompletionList::addSnippet (string prefix, string body, Range &range, string sortText) {
+void CompletionList::addSnippet (string &&prefix, string &&body, Range &range, string &&sortText) {
     CompletionItem snippet {};
     snippet.label = prefix;
 
@@ -193,6 +181,28 @@ void CompletionList::addSnippet (string prefix, string body, Range &range, strin
     if (!sortText.empty()) {
         snippet.sortText = sortText;
     }
+
+    items.emplace_back(snippet);
+}
+
+void CompletionList::addUnicodeChar (string prefix, string body, Range &range) {
+    CompletionItem snippet {};
+    snippet.label = prefix;
+
+    snippet.textEdit.newText = body;
+    snippet.textEdit.range = range;
+
+    snippet.detail = body;
+
+    items.emplace_back(snippet);
+}
+
+void CompletionList::addCommand (string prefix, Range &range) {
+    CompletionItem snippet {};
+    snippet.label = prefix;
+
+    snippet.textEdit.newText = prefix;
+    snippet.textEdit.range = range;
 
     items.emplace_back(snippet);
 }

@@ -1,3 +1,4 @@
+#include <handlers/util.h>
 #include "File.h"
 #include "TextBufferInput.h"
 
@@ -75,7 +76,7 @@ TSPoint TSEndPointOfText (u16string &text) {
         }
     }
 
-    return TSPoint { newlines, length - lastNewlineIndex };
+    return TSPoint { newlines, (length - lastNewlineIndex) << 1 };
 }
 
 void File::setTextInRange (Range &oldRange, std::u16string &&text) {
@@ -83,8 +84,8 @@ void File::setTextInRange (Range &oldRange, std::u16string &&text) {
         auto startIndex = buffer.clip_position(oldRange.start).offset;
         u16string oldText = buffer.text_in_range(oldRange);
 
-        Point start = oldRange.start;
-        Point end = oldRange.end;
+        TSPoint start = toTSPoint(oldRange.start);
+        TSPoint end = toTSPoint(oldRange.end);
 
         TSPoint newEndPoint = TSEndPointOfText(text);
 
@@ -96,10 +97,10 @@ void File::setTextInRange (Range &oldRange, std::u16string &&text) {
 
         TSInputEdit edit = {
                 startIndex, // start byte
-                startIndex + static_cast<unsigned>(oldText.length()), // old end byte
-                startIndex + static_cast<unsigned>(text.length()), // new end byte
-                TSPoint { start.row, start.column }, // start point
-                TSPoint { end.row, end.column }, // old end point
+                startIndex + (static_cast<unsigned>(oldText.length()) << 1), // old end byte
+                startIndex + (static_cast<unsigned>(text.length()) << 1), // new end byte
+                start, // start point
+                end, // old end point
                 newEndPoint // new end point
         };
 
@@ -126,6 +127,7 @@ void File::setText (std::string &&text) {
 
     if (hasParser) {
         ts_tree_delete(tree);
+        tree = nullptr;
         executeParse();
     }
 }
@@ -186,8 +188,25 @@ u16string File::textForNode (const TSNode &node) {
     return textInRange(range);
 }
 
+string File::utf8TextForNode (const TSNode &node) {
+    Range range = rangeForNode(node);
+    return utf8TextInRange(range);
+}
+
 u16string File::textInRange (const Range &range) {
     return buffer.text_in_range(range);
+}
+
+string File::utf8TextInRange (const Range &range) {
+    return utf.utf16to8(buffer.text_in_range(range));
+}
+
+TSNode File::getRootNode () {
+    return ts_tree_root_node(tree);
+}
+
+Point File::getEndPoint () {
+    return buffer.extent();
 }
 
 

@@ -2,27 +2,9 @@
 
 #include "../../filesystem/FileManager.h"
 
+#include "../util.h"
+
 #define PREFIX_MAX_LENGTH 100
-
-Point fromTSPoint (TSPoint tsPoint) {
-    return Point { tsPoint.row, tsPoint.column >> 1 };
-}
-
-TSPoint toTSPoint (Point point) {
-    return TSPoint { point.row, point.column << 1 };
-}
-
-Range fromTSRange (TSRange tsRange) {
-    return { fromTSPoint(tsRange.start_point), fromTSPoint(tsRange.end_point) };
-}
-
-TSRange toTSRange (Range range) {
-    return { toTSPoint(range.start), toTSPoint(range.end) };
-}
-
-TSRange ts_node_range (TSNode node) {
-    return TSRange { ts_node_start_point(node), ts_node_end_point(node) };
-}
 
 bool isCitation (const char *type) {
     return std::strcmp(type, "cite") == 0;
@@ -80,10 +62,6 @@ PrefixData getReferencePrefixData (File &file, Point cursorPosition, TSNode refe
     return {};
 }
 
-PrefixData getMathPrefixData (File &file, Point cursorPosition, TSNode mathNode) {
-    return {};
-}
-
 PrefixData getPackagePrefixData (File &file, Point cursorPosition, TSNode packageNode) {
     return {};
 }
@@ -95,8 +73,7 @@ PrefixData getPackagePrefixData (File &file, Point cursorPosition, TSNode packag
  * and will try all non space characters terminated with @ for a
  * citation key
  */
-PrefixData getTextPrefix (File &file, Point cursorPosition) {
-    std::cerr << "getting text prefix\n";
+PrefixData getTextPrefix (File &file, Point cursorPosition, bool inMath = false) {
     unsigned i { cursorPosition.column }; // index into prefix candidate string
     unsigned startCol { 0 };
     if (cursorPosition.column > PREFIX_MAX_LENGTH) { // we only check the last PREFIX_MAX_LENGTH characters at most
@@ -104,9 +81,6 @@ PrefixData getTextPrefix (File &file, Point cursorPosition) {
         i = PREFIX_MAX_LENGTH;
     }
     auto candidateText = file.textInRange({ { cursorPosition.row, startCol }, cursorPosition });
-
-    std::cerr << "LINE: " << UtfHandler().utf16to8(candidateText) << "\n";
-    std::cerr << "i: " << i << "\n";
 
     if (i == 0) { return { PrefixType::None }; }
     auto c = candidateText[i - 1];
@@ -120,11 +94,8 @@ PrefixData getTextPrefix (File &file, Point cursorPosition) {
 
     bool reachedStartOfLine { true };
 
-    std::cerr << "getting line text\n";
-
     while (i-- != 0) {
         c = candidateText[i];
-        std::cerr << (char) c << "\n";
         if (iswalpha(c)) continue;
         switch (c) {
             case ' ':
@@ -183,15 +154,11 @@ PrefixData getTextPrefix (File &file, Point cursorPosition) {
 
 vector<TSNode> getNodePathForPoint (TSNode rootNode, TSPoint point) {
     vector<TSNode> nodes {};
-
     TSNode node = ts_node_named_descendant_for_point_range(rootNode, point, point);
-
     while (!ts_node_eq(rootNode, node)) {
         nodes.push_back(node);
         node = ts_node_parent(node);
     }
-
-    std::cerr << "returning nodes\n";
     return nodes;
 }
 
@@ -211,11 +178,9 @@ void printNodes (vector<TSNode> &nodes) {
 }
 
 PrefixData getPrefixData (File &file, Point cursorPosition) {
-    std::cerr << "getting prefix data\n";
     vector<TSNode> nodePath = getNodePathForPoint(ts_tree_root_node(file.getParseTree()), toTSPoint(cursorPosition));
-    printNodes(nodePath);
 
-    bool seenBegin { false };
+    bool inMath { false };
 
     // Nodes are most -> least specific, so the first we see should be safe enough
     for (auto node : nodePath) {
@@ -230,7 +195,7 @@ PrefixData getPrefixData (File &file, Point cursorPosition) {
         } else if (isEnvironment(type)) {
             return getEnvironmentPrefixData(file, cursorPosition, node); // want to get the group, not the begin node
         } else if (isMath(type)) {
-            return getMathPrefixData(file, cursorPosition, node);
+            inMath = true;
         } else if (isPackage(type)) {
             return getPackagePrefixData(file, cursorPosition, node);
         } else if (isReference(type)) {
@@ -238,5 +203,5 @@ PrefixData getPrefixData (File &file, Point cursorPosition) {
         }
     }
 
-    return getTextPrefix(file, cursorPosition);
+    return getTextPrefix(file, cursorPosition, inMath);
 }

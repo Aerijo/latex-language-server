@@ -54,7 +54,11 @@ struct CompletionList {
 
     bool empty ();
 
-    void addSnippet (string prefix, string body, Range &range, string sortText = "");
+    void addSnippet (string &&prefix, string &&body, Range &range, string &&sortText = "");
+
+    void addUnicodeChar (string prefix, string body, Range &range);
+
+    void addCommand (string prefix, Range &range);
 
     void addEnvironment (string &prefix, string &envName, Range &range);
 

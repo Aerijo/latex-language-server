@@ -11,9 +11,8 @@ void sendMessage (StringBuffer &buffer) {
             << buffer.GetString();
     std::cout.flush();
 
+//    std::cerr << "OUTGOING\n";
 //    std::cerr
-//            << "Content-Length: " << buffer.GetLength()
-//            << "\r\n\r\n"
 //            << buffer.GetString();
 //    std::cerr.flush();
 }
@@ -69,6 +68,12 @@ void sendError (Id *id, ResponseHandler::ErrorCode code, const char *message, Va
     SEND_MESSAGE
 }
 
+void sendNullResult (Id &id) {
+    INIT_WRITER
+    ADD_ID(id);
+    ADD_NULL_RESULT();
+    SEND_MESSAGE
+}
 
 #define STDIN_EXPECT(e) if (getchar() != e) { gotoNextHeader(); continue; };
 
@@ -153,6 +158,7 @@ Document getMessage () {
         buffer += c;
     }
 
+//    std::cerr << "INCOMING\n";
 //    std::cerr << buffer << "\n\n";
 
     Document json;

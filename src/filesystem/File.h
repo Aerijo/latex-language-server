@@ -10,6 +10,8 @@
 #include "Uri.h"
 #include "UtfHandler.h"
 
+#include <mutex>
+
 /**
  * A logical reflection of a file on the user's computer, including changes in the editor
  * Kept in sync via JSON RPC document events
@@ -31,6 +33,8 @@ private:
     UtfHandler utf {};
 
     bool openInEditor { true };
+
+    std::mutex mtx;
 
 public:
     bool hasParser { false };
@@ -67,7 +71,13 @@ public:
 
     u16string textForNode (const TSNode &node);
 
+    string utf8TextForNode (const TSNode &node);
+
     u16string textInRange (const Range &range);
+
+    string utf8TextInRange (const Range &range);
+
+    Point getEndPoint ();
 
     bool validNextVersion (versionNum nextVersion);
 
@@ -78,6 +88,8 @@ public:
     void setupParser ();
 
     TSTree *getParseTree ();
+
+    TSNode getRootNode ();
 
     string getPath ();
 

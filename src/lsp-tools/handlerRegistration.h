@@ -9,6 +9,8 @@
 #include "handlers/autocomplete/CompletionProvider.h"
 
 #include "handlers/hover/HoverHandler.h"
+#include "handlers/outline/OutlineHandler.h"
+
 #include "handlers/InitializeHandler.h"
 #include "handlers/ShutDownHandler.h"
 
@@ -16,7 +18,7 @@ void registerHandlers (MessageHandler *messageHandler) {
     messageHandler->registerHandler(new InitializeHandler());
     messageHandler->registerHandler(new FileChangeHandler());
     messageHandler->registerHandler(new FileOpenHandler());
-//    messageHandler->registerHandler(new HoverHandler());
+    messageHandler->registerHandler(new OutlineHandler());
     messageHandler->registerHandler(new ShutDownHandler());
     messageHandler->registerHandler(new CompletionProvider());
 }

@@ -1,7 +1,6 @@
 #include <lconfig.h>
 
 #define OUTLINE_ENVIRONMENTS true
-// TODO: outline environments
 
 struct SectionPathNode {
     DocumentSymbol *symbol;
@@ -170,6 +169,8 @@ void gatherOutlineForNode (TSNode node, File &file, vector<DocumentSymbol> &symb
 }
 
 vector<DocumentSymbol> getOutlineForLatexFile (File &file) {
+    // TODO: Environments, external files, values for custom symbols
+
     vector<DocumentSymbol> symbols {};
     vector<SectionPathNode> treePath {};
 

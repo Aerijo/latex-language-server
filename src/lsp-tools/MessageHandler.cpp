@@ -62,14 +62,14 @@ void MessageHandler::run () {
 
         switch (getMessageType(message)) {
             case MessageType::Request:
-                std::cerr << "REQ: " << message["method"].GetString() << "\n";
+//                std::cerr << "REQ: " << message["method"].GetString() << "\n";
                 handleRequest(message);
                 break;
             case MessageType::Response:
                 handleResponse(message);
                 break;
             case MessageType::Notification:
-                std::cerr << "NOT: " << message["method"].GetString() << "\n";
+//                std::cerr << "NOT: " << message["method"].GetString() << "\n";
                 handleNotification(message);
                 break;
             case MessageType::Unknown:

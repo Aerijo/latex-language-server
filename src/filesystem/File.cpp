@@ -81,7 +81,8 @@ TSPoint TSEndPointOfText (u16string &text) {
 
 void File::setTextInRange (Range &oldRange, std::u16string &&text) {
     if (hasParser) {
-        auto startIndex = buffer.clip_position(oldRange.start).offset;
+        uint32_t startByte = buffer.clip_position(oldRange.start).offset << 1;
+
         u16string oldText = buffer.text_in_range(oldRange);
 
         TSPoint start = toTSPoint(oldRange.start);
@@ -96,13 +97,23 @@ void File::setTextInRange (Range &oldRange, std::u16string &&text) {
         newEndPoint.row += start.row;
 
         TSInputEdit edit = {
-                startIndex, // start byte
-                startIndex + (static_cast<unsigned>(oldText.length()) << 1), // old end byte
-                startIndex + (static_cast<unsigned>(text.length()) << 1), // new end byte
+                startByte, // start byte
+                startByte + (static_cast<uint32_t>(oldText.length()) << 1), // old end byte
+                startByte + (static_cast<uint32_t>(text.length()) << 1), // new end byte
                 start, // start point
                 end, // old end point
                 newEndPoint // new end point
         };
+
+//        std::cerr << "TSEDIT\n";
+//        std::cerr << "old text: " << UtfHandler().utf16to8(oldText) << "\n";
+//        std::cerr << "new text: " << UtfHandler().utf16to8(text) << "\n";
+//        std::cerr << "startByte: " << startByte << "\n";
+//        std::cerr << "old end byte: " << edit.old_end_byte << "\n";
+//        std::cerr << "new end byte: " << edit.new_end_byte << "\n";
+//        std::cerr << "start point: " << edit.start_point.row << ":" << edit.start_point.column << "\n";
+//        std::cerr << "old end point: " << edit.old_end_point.row << ":" << edit.old_end_point.column << "\n";
+//        std::cerr << "new end point: " << edit.new_end_point.row << ":" << edit.new_end_point.column << "\n";
 
         ts_tree_edit(tree, &edit);
     }

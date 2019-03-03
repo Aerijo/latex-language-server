@@ -171,14 +171,6 @@ void gatherOutlineForNode (TSNode node, File &file, vector<DocumentSymbol> &symb
 vector<DocumentSymbol> getOutlineForLatexFile (File &file) {
     // TODO: Environments, external files, values for custom symbols
 
-    // TODO: Investigate line swap bug (swapping last two lines with ctrl-[up arrow] gives section name `men`)
-    /*
-        \begin{document}
-        \section{foo}
-        \section{bar}
-        \end{document}
-     */
-
     vector<DocumentSymbol> symbols {};
     vector<SectionPathNode> treePath {};
 

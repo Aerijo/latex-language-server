@@ -8,14 +8,12 @@
 
 void FileChangeHandler::registerCapabilities (Init::ServerCapabilities &capabilities) {
     if (!capabilities.textDocumentSync) capabilities.textDocumentSync = Init::TextDocumentSyncOptions {};
+    auto &textSync = *capabilities.textDocumentSync;
 
-    capabilities.textDocumentSync->openClose = true;
-
-    capabilities.textDocumentSync->change = TextDocumentSyncKind::Incremental;
-
-    capabilities.textDocumentSync->willSave = true;
-
-    capabilities.textDocumentSync->willSaveWaitUntil = false;
+    textSync.openClose = true;
+    textSync.change = TextDocumentSyncKind::Incremental;
+    textSync.willSave = true;
+    textSync.willSaveWaitUntil = false;
 }
 
 optional<string> findBiberDataModel () {

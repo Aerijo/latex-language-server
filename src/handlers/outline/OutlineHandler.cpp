@@ -8,6 +8,7 @@
 #include "../util.h"
 
 #include "latexOutline.cpp"
+#include "bibOutline.cpp"
 
 void OutlineHandler::registerCapabilities (Init::ServerCapabilities &capabilities) {
     std::cerr << "registering\n";
@@ -15,10 +16,7 @@ void OutlineHandler::registerCapabilities (Init::ServerCapabilities &capabilitie
     capabilities.documentSymbolProvider = true;
 }
 
-vector<DocumentSymbol> getOutlineForBibFile (File &file) {
-    vector<DocumentSymbol> symbols {};
-    return symbols;
-}
+
 
 void OutlineHandler::run (Id &id, optional<Value> &paramsOpt) {
     std::cerr << "Getting outline...\n";

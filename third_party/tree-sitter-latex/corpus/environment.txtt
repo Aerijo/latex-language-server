@@ -1,0 +1,35 @@
+======
+Empty
+======
+\begin{foo}\end{foo}
+-----
+(program
+  (environment
+    (open_env (begin_command (cs)) (begin_group) (env_name (text)) (end_group))
+    (close_env (end_command (cs)) (begin_group) (env_name (text)) (end_group))
+  )
+)
+
+======
+Unnamed
+======
+\begin{}\end{}
+-----
+(program
+  (environment
+    (open_env (begin_command (cs)) (begin_group) (end_group))
+    (close_env (end_command (cs)) (begin_group) (end_group))
+  )
+)
+
+======
+Non matching delims
+======
+\begin{foo}\end{bar}
+-----
+(program
+  (environment
+    (open_env (begin_command (cs)) (begin_group) (env_name (text)) (end_group))
+    (close_env (end_command (cs)) (begin_group) (env_name (text)) (end_group))
+  )
+)

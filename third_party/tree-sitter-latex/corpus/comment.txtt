@@ -1,0 +1,34 @@
+=====
+Simple
+=====
+% hello world
+-----
+(program (comment))
+
+=====
+Simple with newline
+=====
+% hello world
+
+-----
+(program (comment))
+
+=====
+In env
+=====
+\begin{fo%comment
+o
+}\end{foo}
+-----
+(program
+  (environment
+    (open_env
+      (begin_command (cs))
+      (begin_group)
+      (env_name (text) (comment) (text))
+      (end_group))
+    (close_env
+      (end_command (cs))
+      (begin_group)
+      (env_name (text))
+      (end_group))))

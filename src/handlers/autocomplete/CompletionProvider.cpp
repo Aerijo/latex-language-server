@@ -10,7 +10,6 @@
 #include "./PrefixTools.cpp"
 #include "../util.h"
 
-//#include <pcre.h>
 
 void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabilities) {
     if (!capabilities.completionProvider) capabilities.completionProvider = Init::CompletionOptions {};
@@ -58,7 +57,14 @@ void addCommandCompletions (CompletionList &completions, File &file, PrefixData 
     completions.addSnippet("\\subparagraph", "\\\\subparagraph{$1}\n$0", prefix.range);
     completions.addSnippet("\\chapter", "\\\\chapter{$1}\n$0", prefix.range);
     completions.addSnippet("\\part", "\\\\part{$1}\n$0", prefix.range);
+    completions.addSnippet("\\documentclass", "\\\\documentclass[$2]{$1}$0", prefix.range);
+    completions.addSnippet("\\usepackage", "\\\\usepackage{$1}$0", prefix.range);
     completions.addCommand("\\phi", prefix.range);
+    completions.addCommand("\\emptyset", prefix.range);
+    completions.addCommand("\\item", prefix.range);
+
+    Range range = Range { prefix.range.start.traverse({0, 2}), prefix.range.end.traverse({0, 3}) };
+    completions.addCommand("\\foobar", range);
 }
 
 void addMathShiftCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
@@ -84,8 +90,11 @@ CompletionList getLatexCompletionsForFileAndPoint (File &file, Point cursorPosit
 
     CompletionList completions {};
     switch (prefix.type) {
-        case PrefixType::None:
+        case PrefixType::None: {
+            auto customRange = Range { cursorPosition, cursorPosition };
+            completions.addSnippet("hello", "foobarbaz", customRange);
             return completions;
+        }
 //        case PrefixType::Citation:
 //            addCitationCompletions(completions, file, prefix);
 //            break;
@@ -102,6 +111,7 @@ CompletionList getLatexCompletionsForFileAndPoint (File &file, Point cursorPosit
             addShortEnvironmentCompletions(completions, file, prefix);
             break;
         case PrefixType::Magic:
+            exit(1);
             addMagicCommentCompletions(completions, file, prefix);
             break;
         case PrefixType::MathShift:
@@ -177,22 +187,7 @@ void CompletionList::addSnippet (string &&prefix, string &&body, Range &range, s
 
     snippet.textEdit.newText = body;
     snippet.textEdit.range = range;
-
-    if (!sortText.empty()) {
-        snippet.sortText = sortText;
-    }
-
-    items.emplace_back(snippet);
-}
-
-void CompletionList::addUnicodeChar (string prefix, string body, Range &range) {
-    CompletionItem snippet {};
-    snippet.label = prefix;
-
-    snippet.textEdit.newText = body;
-    snippet.textEdit.range = range;
-
-    snippet.detail = body;
+    snippet.sortText = sortText;
 
     items.emplace_back(snippet);
 }

@@ -1,0 +1,30 @@
+=====
+Inline
+=====
+\verb+foo+
+-----
+(program (verbatim (cs) (verb)))
+
+=====
+Comment char delim
+=====
+\verb%foo%
+-----
+(program (verbatim (cs) (verb)))
+
+=====
+Space delim
+=====
+\verb foo bar
+-----
+(program (verbatim (cs) (verb)) (text))
+
+=====
+Star delim
+=====
+\verb*foo*f% <- delim is 'f'
+\verb**foo*f% <- delim is '*'
+-----
+(program
+  (verbatim (cs) (star) (verb)) (comment)
+  (verbatim (cs) (star) (verb)) (text) (comment))

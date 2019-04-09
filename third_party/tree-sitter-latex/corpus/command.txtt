@@ -1,0 +1,20 @@
+======
+Word
+======
+\foo
+-----
+(program (control_word (cs)))
+
+======
+Symbol
+======
+\#
+-----
+(program (control_symbol (cs)))
+
+======
+Control space
+======
+\ %
+-----
+(program (control_symbol (cs)) (comment))

@@ -1,0 +1,9 @@
+node_modules
+build
+*.log
+.vscode
+/examples/*
+!/examples/*.tex
+/src/tree_sitter
+/src/grammar.json
+/src/parser.c

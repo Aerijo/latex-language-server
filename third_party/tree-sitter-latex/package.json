@@ -1,56 +1,30 @@
 {
-  "name": "@dicy/tree-sitter-latex",
-  "version": "0.1.0",
-  "description": "LaTeX grammar for tree-sitter",
+  "name": "tree-sitter-latex2e",
+  "version": "0.0.0",
+  "description": "Tree sitter parser for LaTeX",
   "main": "index.js",
-  "scripts": {
-    "benchmark": "node script/benchmark.js",
-    "build": "tree-sitter generate && node-gyp configure",
-    "fix": "clang-format -i src/catcode.hh src/catcode.cc src/scanner.hh src/scanner.cc src/scanner_control_sequences.cc src/scanner_environments.cc src/scanner_keywords.cc src/scanner_names.cc src/serialization.hh && standard --fix",
-    "parse-test": "node script/parse-test.js",
-    "parse": "tree-sitter parse",
-    "test": "standard --verbose | snazzy && tree-sitter test"
-  },
-  "engines": {
-    "node": ">=10.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yitzchak/tree-sitter-latex.git"
-  },
+  "repository": "https://github.com/Aerijo/tree-sitter-latex2e",
+  "bugs": "https://github.com/Aerijo/tree-sitter-latex2e/issues",
   "keywords": [
+    "latex",
+    "grammar",
+    "syntax",
+    "highlighting",
     "parser",
     "lexer",
-    "latex"
+    "tree-sitter"
   ],
-  "author": "Tarn Burton <twburton@gmail.com>",
+  "author": "Benjamin Gray",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/yitzchak/tree-sitter-latex/issues"
-  },
-  "homepage": "https://github.com/yitzchak/tree-sitter-latex",
   "dependencies": {
-    "nan": "^2.12.1"
+    "nan": "^2.10.0"
+  },
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp build",
+    "parse": "node scripts/parse.js",
+    "test": "tree-sitter test && tree-sitter parse examples --quiet --time"
   },
   "devDependencies": {
-    "chalk": "^2.4.1",
-    "readdir-enhanced": "^2.2.4",
-    "snazzy": "^8.0.0",
-    "standard": "^12.0.1",
-    "tree-sitter": "^0.13.23",
-    "tree-sitter-cli": "^0.13.15"
-  },
-  "standard": {
-    "globals": [
-      "alias",
-      "choice",
-      "grammar",
-      "optional",
-      "prec",
-      "repeat",
-      "repeat1",
-      "seq",
-      "token"
-    ]
+    "tree-sitter-cli": "^0.14.5"
   }
 }

@@ -159,6 +159,9 @@ void File::executeParse () {
 
     tree = ts_parser_parse(parser, tree, textBufferInput.input());
 
+    std::cerr << "tree:\n";
+    std::cerr << ts_node_string(ts_tree_root_node(tree)) << "\n";
+
     delete snapshot;
 }
 

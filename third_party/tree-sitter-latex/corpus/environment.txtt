@@ -5,8 +5,8 @@ Empty
 -----
 (program
   (environment
-    (open_env (begin_command (cs)) (begin_group) (env_name (text)) (end_group))
-    (close_env (end_command (cs)) (begin_group) (env_name (text)) (end_group))
+    (open_env (begin_env) (begin_group) (text) (end_group))
+    (close_env (end_env) (begin_group) (text) (end_group))
   )
 )
 
@@ -17,8 +17,8 @@ Unnamed
 -----
 (program
   (environment
-    (open_env (begin_command (cs)) (begin_group) (end_group))
-    (close_env (end_command (cs)) (begin_group) (end_group))
+    (open_env (begin_env) (begin_group) (end_group))
+    (close_env (end_env) (begin_group) (end_group))
   )
 )
 
@@ -29,7 +29,7 @@ Non matching delims
 -----
 (program
   (environment
-    (open_env (begin_command (cs)) (begin_group) (env_name (text)) (end_group))
-    (close_env (end_command (cs)) (begin_group) (env_name (text)) (end_group))
+    (open_env (begin_env) (begin_group) (text) (end_group))
+    (close_env (end_env) (begin_group) (text) (end_group))
   )
 )

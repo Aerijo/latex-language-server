@@ -1,67 +1,3 @@
-const cmd = ($, name, {ws=true, star=false, argument=null}) => {
-  const arg = [$._escape_char, alias(name, $.cs)]
-
-  if (!star && !argument) return seq(...arg)
-
-  if (ws && star) {
-    arg.push(optional($.s_whitespace), repeat($.m_whitespace), optional(seq($.star, optional($.s_whitespace), repeat($.m_whitespace))))
-    if (argument) {
-      arg.push(argument)
-    }
-  } else if (ws && !star && argument) {
-    arg.push(optional($.s_whitespace), repeat($.m_whitespace), argument)
-  } else if (!ws && star) {
-    arg.push(optional($.star))
-  }
-
-  let result = seq(...arg)
-  if (argument) {
-    result = prec.right(result)
-  }
-
-  return result
-
-  /*
-  Whitespace rules:
-    1) Every line starts as (N)
-    2) The state is (S) after a control word
-    3) The state is (S) after a control space '\ '
-    4) The state is (M) after any other control symbol
-    5) If a newline is seen:
-      (N) - '\par' is inserted
-      (S) - Ignored
-      (M) - ' ' is inserted
-    6) Comments consume the newline, so the state simply switches to (N) regardless
-
-  Extra rules:
-    1) If a command can be starred, it is in state (S) after the star
-
-
-  E.g.,
-  ```
-  (N)   \begin    (S)    \n
-  (N)     % (Note newline is removed by comment)
-  (N) {env} % <- this is the argument to \begin
-
-
-  (N)   \section  (S)    *  (M)   \n (in M, so space)
-  (N)      {name}
-  ```
-  */
-}
-
-const group = ($, contents, opt=true) => {
-  if (contents instanceof Array) {
-    contents = seq(...contents)
-  }
-
-  if (opt) {
-    contents = optional(contents)
-  }
-
-  return seq($.begin_group, contents, $.end_group)
-}
-
 /**
  * This grammar targets a broader version of LaTeX than I would use
  * for syntax highlighting. Only the bare minimum for accurate highlighting
@@ -78,11 +14,16 @@ module.exports = grammar({
 
   externals: $ => [
     $._error,
-    $.verb,
-    $.star, // defined in this file
-    $.s_whitespace,
-    $.m_whitespace,
+    $.verb_body,
+    $.star,
+    $.control_symbol,
+    $.control_word,
+    $.begin_env,
+    $.end_env,
+    $.verb_command,
   ],
+
+  word: $ => $.letters,
 
   extras: $ => [
     $.comment
@@ -112,7 +53,7 @@ module.exports = grammar({
 
     /** NONTERMINAL SYMBOLS */
 
-    _text_mode: $ => prec.right(repeat1(choice(
+    _text_mode: $ => prec.left(repeat1(choice(
       $._control_sequence,
       $.text_group,
       $.text,
@@ -134,27 +75,14 @@ module.exports = grammar({
       $.control_word
     ),
 
-    control_symbol: $ => cmd($, $.symbol, {ws: false}), // trailing space is not removed in a control symbol.
-    control_word:   $ => cmd($, $.letters, {ws: true}),
-
-    verbatim: $ => seq(cmd($, "verb", {ws: false, star: true}), $.verb),
+    verbatim: $ => seq($.verb_command, optional($.star), $.verb_body),
 
     environment: $ => seq($.open_env, optional($.env_body), $.close_env),
 
     env_body: $ => $._text_mode,
 
-    open_env: $ => seq(
-      $.begin_command,
-      group($, optional(alias($._simple_group, $.env_name))),
-    ),
+    open_env: $ => seq($.begin_env, repeat(/\s+/), $.begin_group, optional($._text_mode), $.end_group),
 
-    begin_command: $ => cmd($, "begin", {}),
-
-    close_env: $ => seq(
-      $.end_command,
-      group($, optional(alias($._simple_group, $.env_name))),
-    ),
-
-    end_command: $ => cmd($, "end", {}),
+    close_env: $ => seq($.end_env, repeat(/\s+/), $.begin_group, optional($._text_mode), $.end_group),
   }
 })

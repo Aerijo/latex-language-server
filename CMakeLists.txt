@@ -27,12 +27,7 @@ add_executable(latex_language_server
 
         third_party/tree-sitter-biber/src/parser.c
 
-        third_party/tree-sitter-latex/src/catcode.cc
         third_party/tree-sitter-latex/src/parser.c
-        third_party/tree-sitter-latex/src/scanner_control_sequences.cc
-        third_party/tree-sitter-latex/src/scanner_environments.cc
-        third_party/tree-sitter-latex/src/scanner_keywords.cc
-        third_party/tree-sitter-latex/src/scanner_names.cc
         third_party/tree-sitter-latex/src/scanner.cc
 
         third_party/superstring/vendor/pcre2-10.32/src/pcre2_auto_possess.c

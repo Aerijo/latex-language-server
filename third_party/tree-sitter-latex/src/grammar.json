@@ -1,5 +1,6 @@
 {
   "name": "latex",
+  "word": "letters",
   "rules": {
     "program": {
       "type": "CHOICE",
@@ -70,7 +71,7 @@
       }
     },
     "_text_mode": {
-      "type": "PREC_RIGHT",
+      "type": "PREC_LEFT",
       "value": 0,
       "content": {
         "type": "REPEAT1",
@@ -163,78 +164,28 @@
         }
       ]
     },
-    "control_symbol": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_escape_char"
-        },
-        {
-          "type": "ALIAS",
-          "content": {
-            "type": "SYMBOL",
-            "name": "symbol"
-          },
-          "named": true,
-          "value": "cs"
-        }
-      ]
-    },
-    "control_word": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_escape_char"
-        },
-        {
-          "type": "ALIAS",
-          "content": {
-            "type": "SYMBOL",
-            "name": "letters"
-          },
-          "named": true,
-          "value": "cs"
-        }
-      ]
-    },
     "verbatim": {
       "type": "SEQ",
       "members": [
         {
-          "type": "SEQ",
+          "type": "SYMBOL",
+          "name": "verb_command"
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_escape_char"
+              "name": "star"
             },
             {
-              "type": "ALIAS",
-              "content": {
-                "type": "STRING",
-                "value": "verb"
-              },
-              "named": true,
-              "value": "cs"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "star"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
+              "type": "BLANK"
             }
           ]
         },
         {
           "type": "SYMBOL",
-          "name": "verb"
+          "name": "verb_body"
         }
       ]
     },
@@ -272,63 +223,34 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "begin_command"
+          "name": "begin_env"
         },
         {
-          "type": "SEQ",
+          "type": "REPEAT",
+          "content": {
+            "type": "PATTERN",
+            "value": "\\s+"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "begin_group"
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
               "type": "SYMBOL",
-              "name": "begin_group"
+              "name": "_text_mode"
             },
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_simple_group"
-                      },
-                      "named": true,
-                      "value": "env_name"
-                    },
-                    {
-                      "type": "BLANK"
-                    }
-                  ]
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
-            {
-              "type": "SYMBOL",
-              "name": "end_group"
+              "type": "BLANK"
             }
           ]
-        }
-      ]
-    },
-    "begin_command": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_escape_char"
         },
         {
-          "type": "ALIAS",
-          "content": {
-            "type": "STRING",
-            "value": "begin"
-          },
-          "named": true,
-          "value": "cs"
+          "type": "SYMBOL",
+          "name": "end_group"
         }
       ]
     },
@@ -337,63 +259,34 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "end_command"
+          "name": "end_env"
         },
         {
-          "type": "SEQ",
+          "type": "REPEAT",
+          "content": {
+            "type": "PATTERN",
+            "value": "\\s+"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "begin_group"
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
               "type": "SYMBOL",
-              "name": "begin_group"
+              "name": "_text_mode"
             },
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_simple_group"
-                      },
-                      "named": true,
-                      "value": "env_name"
-                    },
-                    {
-                      "type": "BLANK"
-                    }
-                  ]
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
-            {
-              "type": "SYMBOL",
-              "name": "end_group"
+              "type": "BLANK"
             }
           ]
-        }
-      ]
-    },
-    "end_command": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_escape_char"
         },
         {
-          "type": "ALIAS",
-          "content": {
-            "type": "STRING",
-            "value": "end"
-          },
-          "named": true,
-          "value": "cs"
+          "type": "SYMBOL",
+          "name": "end_group"
         }
       ]
     }
@@ -412,7 +305,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "verb"
+      "name": "verb_body"
     },
     {
       "type": "SYMBOL",
@@ -420,11 +313,23 @@
     },
     {
       "type": "SYMBOL",
-      "name": "s_whitespace"
+      "name": "control_symbol"
     },
     {
       "type": "SYMBOL",
-      "name": "m_whitespace"
+      "name": "control_word"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "begin_env"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "end_env"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "verb_command"
     }
   ],
   "inline": []

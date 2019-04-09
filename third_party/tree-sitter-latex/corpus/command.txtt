@@ -3,18 +3,18 @@ Word
 ======
 \foo
 -----
-(program (control_word (cs)))
+(program (control_word))
 
 ======
 Symbol
 ======
 \#
 -----
-(program (control_symbol (cs)))
+(program (control_symbol))
 
 ======
 Control space
 ======
 \ %
 -----
-(program (control_symbol (cs)) (comment))
+(program (control_symbol) (comment))

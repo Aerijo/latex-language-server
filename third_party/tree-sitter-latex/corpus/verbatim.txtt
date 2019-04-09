@@ -3,21 +3,21 @@ Inline
 =====
 \verb+foo+
 -----
-(program (verbatim (cs) (verb)))
+(program (verbatim (verb_command) (verb_body)))
 
 =====
 Comment char delim
 =====
 \verb%foo%
 -----
-(program (verbatim (cs) (verb)))
+(program (verbatim (verb_command) (verb_body)))
 
 =====
 Space delim
 =====
 \verb foo bar
 -----
-(program (verbatim (cs) (verb)) (text))
+(program (verbatim (verb_command) (verb_body)) (text))
 
 =====
 Star delim
@@ -26,5 +26,5 @@ Star delim
 \verb**foo*f% <- delim is '*'
 -----
 (program
-  (verbatim (cs) (star) (verb)) (comment)
-  (verbatim (cs) (star) (verb)) (text) (comment))
+  (verbatim (verb_command) (star) (verb_body)) (comment)
+  (verbatim (verb_command) (star) (verb_body)) (text) (comment))

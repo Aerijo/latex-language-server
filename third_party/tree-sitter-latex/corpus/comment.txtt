@@ -23,12 +23,12 @@ o
 (program
   (environment
     (open_env
-      (begin_command (cs))
+      (begin_env)
       (begin_group)
-      (env_name (text) (comment) (text))
+      (text) (comment) (text)
       (end_group))
     (close_env
-      (end_command (cs))
+      (end_env)
       (begin_group)
-      (env_name (text))
+      (text)
       (end_group))))

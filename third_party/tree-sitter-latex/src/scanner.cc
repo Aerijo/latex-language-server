@@ -20,60 +20,31 @@ enum TokenType {
   CONTROL_WORD,
   BEGIN_ENV,
   END_ENV,
-  VERB_COMMAND,
+  INLINE_MATH_START,
+  INLINE_MATH_END,
+  DISPLAY_MATH_START,
+  DISPLAY_MATH_END,
+  MATH_SHIFT_ERROR,
 };
 
 struct Scanner {
-  Scanner () {}
-
+  Scanner () = default;
 
   void destroy () {}
-
 
   unsigned serialize (char *buffer) {
     return 0;
   }
 
-
   void deserialize (const char *buffer, unsigned length) {}
-
-
-  bool scan_verbatim (TSLexer *lexer, bool starValid) {
-    // NOTE: ' ' (space) is a valid delim character
-    //   As is '*'; the first star is gobbled by the main grammar if present
-    char start_delim;
-    switch (lexer->lookahead) {
-      case '\n':
-      case '\0':
-        return false;
-      default:
-        start_delim = lexer->lookahead;
-        lexer->advance(lexer, false);
-    }
-
-    if (starValid && start_delim == '*') return false;
-
-    while (lexer->lookahead && lexer->lookahead != start_delim && lexer->lookahead != '\n') {
-      lexer->advance(lexer, false);
-    }
-
-    if (lexer->lookahead == start_delim) lexer->advance(lexer, false);
-    lexer->mark_end(lexer);
-
-    lexer->result_symbol = VERBATIM;
-    return true;
-  }
-
 
   bool is_error_mode (const bool *validSymbols) {
     return validSymbols[ERROR];
   }
 
-
-  bool is_inline_space (uint32_t symbol) {
+  bool is_inline_space (int32_t symbol) {
     return symbol == ' ' || symbol == '\t';
   }
-
 
   /**
    * This is checked immediately following a command that is expected to
@@ -95,7 +66,11 @@ struct Scanner {
 
     switch (lexer->lookahead) {
       case '\n':
+        break;
       case '%':
+        while (lexer->lookahead && lexer->lookahead != '\n') {
+          lexer->advance(lexer, true);
+        }
         break;
       default:
         return lexer->lookahead == '{';
@@ -120,7 +95,6 @@ struct Scanner {
     return true;
   }
 
-
   bool scan_env_command (TSLexer *lexer, TokenType type, const char *name, int length) {
     int i = 0;
     do {
@@ -143,7 +117,6 @@ struct Scanner {
     return true;
   }
 
-
   bool scan_generic_control_sequence (TSLexer *lexer) {
     do {
       lexer->advance(lexer, false);
@@ -152,7 +125,6 @@ struct Scanner {
     lexer->result_symbol = CONTROL_WORD;
     return true;
   }
-
 
   bool scan_verb_command (TSLexer *lexer) {
     const char name[] = "erb";
@@ -169,11 +141,34 @@ struct Scanner {
     if (isalnum(lexer->lookahead)) {
       return scan_generic_control_sequence(lexer);
     }
+
+    lexer->result_symbol = VERBATIM;
+
+    // \verb allows a starred variant
+    if (lexer->lookahead == '*') { lexer->advance(lexer, false); }
+
+    int32_t start_delim;
+    switch (lexer->lookahead) {
+      case '\n':
+      case '\0':
+        lexer->mark_end(lexer);
+        return true;
+      default:
+        start_delim = lexer->lookahead;
+        lexer->advance(lexer, false);
+    }
+
+    while (lexer->lookahead && lexer->lookahead != start_delim && lexer->lookahead != '\n') {
+      lexer->advance(lexer, false);
+    }
+
+    if (lexer->lookahead == start_delim) {
+      lexer->advance(lexer, false);
+    }
+
     lexer->mark_end(lexer);
-    lexer->result_symbol = VERB_COMMAND;
     return true;
   }
-
 
   bool scan_control_sequence (TSLexer *lexer, const bool *valid_symbols) {
     if (lexer->lookahead != '\\') { return false; }
@@ -183,17 +178,44 @@ struct Scanner {
     if (!isalpha(c)) {
       lexer->advance(lexer, false);
       lexer->mark_end(lexer);
-      lexer->result_symbol = CONTROL_SYMBOL;
+
+      /*
+       * We cannot start a different kind of maths inside
+       * an existing math environment. Nor can we close
+       * math without a matching opener. We mark all detected
+       * cases of this with MATH_SHIFT_ERROR, so the parsing
+       * does not break.
+       */
+      if (c == '(') {
+        lexer->result_symbol = valid_symbols[DISPLAY_MATH_END]
+          ? MATH_SHIFT_ERROR
+          : INLINE_MATH_START;
+      } else if (c == '[') {
+        lexer->result_symbol = valid_symbols[INLINE_MATH_END]
+          ? MATH_SHIFT_ERROR
+          : DISPLAY_MATH_START;
+      } else if (c == ')') {
+        lexer->result_symbol = valid_symbols[INLINE_MATH_END]
+          ? INLINE_MATH_END
+          : MATH_SHIFT_ERROR;
+      } else if (c == ']') {
+        lexer->result_symbol = valid_symbols[DISPLAY_MATH_END]
+          ? DISPLAY_MATH_END
+          : MATH_SHIFT_ERROR;
+      } else {
+        lexer->result_symbol = CONTROL_SYMBOL;
+      }
+
       return true;
     }
 
-    if (c == 'b' && valid_symbols[BEGIN_ENV]) {
+    if (c == 'b') {
       const char name[] { 'e', 'g', 'i', 'n' };
       return scan_env_command(lexer, BEGIN_ENV, name, 4);
     } else if (c == 'e' && valid_symbols[END_ENV]) {
       const char name[] { 'n', 'd' };
       return scan_env_command(lexer, END_ENV, name, 2);
-    } else if (c == 'v' && valid_symbols[VERB_COMMAND]) {
+    } else if (c == 'v') {
       return scan_verb_command(lexer);
     }
 
@@ -206,10 +228,57 @@ struct Scanner {
     return true;
   }
 
+  bool scan_math_shift (TSLexer *lexer, const bool *valid_symbols) {
+    // lookahead == '$'
+    lexer->advance(lexer, false);
+
+    if (valid_symbols[INLINE_MATH_END]) {
+      lexer->mark_end(lexer);
+      lexer->result_symbol = INLINE_MATH_END;
+      return true;
+    }
+
+    if (lexer->lookahead != '$') {
+      lexer->mark_end(lexer);
+
+      // a single $ is an error in display math mode
+      lexer->result_symbol = valid_symbols[DISPLAY_MATH_END]
+        ? MATH_SHIFT_ERROR
+        : INLINE_MATH_START;
+
+      return true;
+    }
+
+    lexer->advance(lexer, false);
+    lexer->mark_end(lexer);
+    lexer->result_symbol = valid_symbols[DISPLAY_MATH_END]
+      ? DISPLAY_MATH_END
+      : DISPLAY_MATH_START;
+
+    return true;
+  }
 
   bool scan (TSLexer *lexer, const bool *valid_symbols) {
-    if (is_error_mode(valid_symbols)) {
-      std::cout << "ERROR!!!\n";
+    // if (is_error_mode(valid_symbols)) {
+    //   std::cerr << "ERROR!!!\n";
+    // }
+    const int32_t c = lexer->lookahead;
+
+    if (c == '\\' && valid_symbols[CONTROL_WORD]) {
+      return scan_control_sequence(lexer, valid_symbols);
+    }
+
+    if (c == '$' && (
+        valid_symbols[INLINE_MATH_START] ||
+        valid_symbols[INLINE_MATH_END] ||
+        valid_symbols[DISPLAY_MATH_START] ||
+        valid_symbols[DISPLAY_MATH_END]
+      )) {
+      return scan_math_shift(lexer, valid_symbols);
+    }
+
+    if (c == '}' && (valid_symbols[INLINE_MATH_END] || valid_symbols[DISPLAY_MATH_END])) {
+      // implicit mathmode end
     }
 
     // also tries this if in error mode
@@ -217,14 +286,10 @@ struct Scanner {
       return scan_control_sequence(lexer, valid_symbols);
     }
 
-    if (valid_symbols[STAR] && lexer->lookahead == '*') {
+    if (valid_symbols[STAR] && c == '*') {
       lexer->advance(lexer, false);
       lexer->result_symbol = STAR;
       return true;
-    }
-
-    if (valid_symbols[VERBATIM]) {
-      return scan_verbatim(lexer, valid_symbols[STAR]);
     }
 
     return false;

@@ -24,11 +24,13 @@ o
   (environment
     (open_env
       (begin_env)
-      (begin_group)
-      (text) (comment) (text)
-      (end_group))
+      (group
+        (begin_group)
+        (text) (comment) (text)
+        (end_group)))
     (close_env
       (end_env)
-      (begin_group)
-      (text)
-      (end_group))))
+      (group
+        (begin_group)
+        (text)
+        (end_group)))))

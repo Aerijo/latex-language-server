@@ -40,7 +40,7 @@
     },
     "text": {
       "type": "PATTERN",
-      "value": "[^\\#\\$%\\^&_\\{\\}~\\\\][^\\#\\$%\\^\\&_\\{\\}~\\\\]*"
+      "value": "[^\\$%\\{\\}\\\\]+"
     },
     "symbol": {
       "type": "PATTERN",
@@ -71,38 +71,6 @@
       }
     },
     "_text_mode": {
-      "type": "PREC_LEFT",
-      "value": 0,
-      "content": {
-        "type": "REPEAT1",
-        "content": {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_control_sequence"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "text_group"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "text"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "environment"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "verbatim"
-            }
-          ]
-        }
-      }
-    },
-    "_simple_group": {
       "type": "REPEAT1",
       "content": {
         "type": "CHOICE",
@@ -113,15 +81,31 @@
           },
           {
             "type": "SYMBOL",
-            "name": "inline_math_shift"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "display_math_shift"
+            "name": "text_group"
           },
           {
             "type": "SYMBOL",
             "name": "text"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "environment"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "verbatim"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "math_shift_error"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "inline_math"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "display_math"
           }
         ]
       }
@@ -164,19 +148,19 @@
         }
       ]
     },
-    "verbatim": {
+    "group": {
       "type": "SEQ",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "verb_command"
+          "name": "begin_group"
         },
         {
           "type": "CHOICE",
           "members": [
             {
               "type": "SYMBOL",
-              "name": "star"
+              "name": "_text_mode"
             },
             {
               "type": "BLANK"
@@ -185,7 +169,57 @@
         },
         {
           "type": "SYMBOL",
-          "name": "verb_body"
+          "name": "end_group"
+        }
+      ]
+    },
+    "inline_math": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "inline_math_start"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_text_mode"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "inline_math_end"
+        }
+      ]
+    },
+    "display_math": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "display_math_start"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_text_mode"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "display_math_end"
         }
       ]
     },
@@ -234,23 +268,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "begin_group"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_text_mode"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "end_group"
+          "name": "group"
         }
       ]
     },
@@ -270,23 +288,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "begin_group"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_text_mode"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "end_group"
+          "name": "group"
         }
       ]
     }
@@ -305,7 +307,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "verb_body"
+      "name": "verbatim"
     },
     {
       "type": "SYMBOL",
@@ -329,7 +331,23 @@
     },
     {
       "type": "SYMBOL",
-      "name": "verb_command"
+      "name": "inline_math_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "inline_math_end"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "display_math_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "display_math_end"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "math_shift_error"
     }
   ],
   "inline": []

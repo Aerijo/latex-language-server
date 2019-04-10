@@ -14,13 +14,17 @@ module.exports = grammar({
 
   externals: $ => [
     $._error,
-    $.verb_body,
+    $.verbatim,
     $.star,
     $.control_symbol,
     $.control_word,
     $.begin_env,
     $.end_env,
-    $.verb_command,
+    $.inline_math_start,
+    $.inline_math_end,
+    $.display_math_start,
+    $.display_math_end,
+    $.math_shift_error,
   ],
 
   word: $ => $.letters,
@@ -42,7 +46,7 @@ module.exports = grammar({
     inline_math_shift: _ => '$',
     display_math_shift: _ => '$$',
 
-    text: _ => /[^\#\$%\^&_\{\}~\\][^\#\$%\^\&_\{\}~\\]*/,
+    text: _ => /[^\$%\{\}\\]+/,
 
     symbol:  _ => /[^a-zA-Z@]/,
     letters: _ => /[a-zA-Z@]+/,
@@ -53,19 +57,15 @@ module.exports = grammar({
 
     /** NONTERMINAL SYMBOLS */
 
-    _text_mode: $ => prec.left(repeat1(choice(
+    _text_mode: $ => repeat1(choice(
       $._control_sequence,
       $.text_group,
       $.text,
       $.environment,
       $.verbatim,
-    ))),
-
-    _simple_group: $ => repeat1(choice(
-      $._control_sequence,
-      $.inline_math_shift,
-      $.display_math_shift,
-      $.text
+      $.math_shift_error,
+      $.inline_math,
+      $.display_math,
     )),
 
     text_group: $ => seq($.begin_group, optional($._text_mode), $.end_group),
@@ -75,14 +75,18 @@ module.exports = grammar({
       $.control_word
     ),
 
-    verbatim: $ => seq($.verb_command, optional($.star), $.verb_body),
+    group: $ => seq($.begin_group, optional($._text_mode), $.end_group),
+
+    inline_math: $ => seq($.inline_math_start, optional($._text_mode), $.inline_math_end),
+
+    display_math: $ => seq($.display_math_start, optional($._text_mode), $.display_math_end),
 
     environment: $ => seq($.open_env, optional($.env_body), $.close_env),
 
     env_body: $ => $._text_mode,
 
-    open_env: $ => seq($.begin_env, repeat(/\s+/), $.begin_group, optional($._text_mode), $.end_group),
+    open_env: $ => seq($.begin_env, repeat(/\s+/), $.group),
 
-    close_env: $ => seq($.end_env, repeat(/\s+/), $.begin_group, optional($._text_mode), $.end_group),
+    close_env: $ => seq($.end_env, repeat(/\s+/), $.group),
   }
 })

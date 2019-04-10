@@ -77,6 +77,10 @@ public:
 
     string utf8TextInRange (const Range &range);
 
+    u16string textForRow (uint32_t row);
+
+    string utf8textForRow (uint32_t row);
+
     Point getEndPoint ();
 
     bool validNextVersion (versionNum nextVersion);

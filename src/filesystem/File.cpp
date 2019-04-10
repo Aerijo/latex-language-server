@@ -223,4 +223,13 @@ Point File::getEndPoint () {
     return buffer.extent();
 }
 
+u16string File::textForRow (uint32_t row) {
+    auto line = buffer.line_for_row(row);
+    return *line;
+}
+
+string File::utf8textForRow (uint32_t row) {
+    return utf.utf16to8(textForRow(row));
+}
+
 

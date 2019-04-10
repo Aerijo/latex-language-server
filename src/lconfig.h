@@ -21,11 +21,42 @@ namespace LConfig {
     struct DocumentUri {
         DocumentUri () = default;
 
-        explicit DocumentUri (const char *uri) : uri(uri) {}
+        explicit DocumentUri (const char *uri) : uri { uri } {}
 
         const char *uri;
 
     };
+
+    /**
+     * Holds information about a section name, such as if
+     * it has a starred variant, if it takes an argument,
+     * what symbol to use, what level it is.
+     */
+    struct OutlineSectionData {
+        int level;
+        int symbol;
+        bool hasStar { true };
+        bool hasArgument { true };
+
+        OutlineSectionData (int level, int symbol, bool hasStar=true, bool hasArgument=true)
+            : level { level }, symbol { symbol }, hasStar { hasStar }, hasArgument { hasArgument } {}
+    };
+
+    namespace OutlineSymbol {
+    /**
+ * Convenient way to set the default section symbol kinds.
+ */
+    enum {
+        Part = static_cast<int>(SymbolKind::File),
+        Chapter = static_cast<int>(SymbolKind::Module),
+        Section = static_cast<int>(SymbolKind::Namespace),
+        Subsection = static_cast<int>(SymbolKind::Package),
+        Subsubsection = static_cast<int>(SymbolKind::Function),
+        Paragraph = static_cast<int>(SymbolKind::Field),
+        Subparagraph = static_cast<int>(SymbolKind::Null),
+    };
+    }
+
 
 // TODO
     enum ResourceOperationKind {
@@ -302,13 +333,31 @@ namespace LConfig {
     };
 
     struct LatexConfig {
-        struct Extension {
-            bool headingSymbolKinds { false }; // if special symbols for outline view are supported
-        } extensions;
+        struct Outline {
+            bool extendedSymbolKinds { false }; // if special symbols for outline view are supported by client
+
+            bool includeEnvironments { true }; // add environment names to tree
+
+            bool deepSearch { true }; // search recursively through groups and environments, instead of just top level
+
+            std::unordered_map<string, OutlineSectionData> sectionCommands {
+                    {"part", {-1, OutlineSymbol::Part}},
+                    {"chapter", {0, OutlineSymbol::Chapter}},
+                    {"section", {1, OutlineSymbol::Section}},
+                    {"subsection", {2, OutlineSymbol::Subsection}},
+                    {"subsubsection", {3, OutlineSymbol::Subsubsection}},
+                    {"paragraph", {4, OutlineSymbol::Paragraph}},
+                    {"subparagraph", {5, OutlineSymbol::Subparagraph}},
+            };
+        } outline;
     };
 
     struct BibConfig {
         Style::Style *style { nullptr };
+
+        ~BibConfig () {
+            delete style;
+        }
     };
 
 }; // end namespace Config
@@ -317,10 +366,6 @@ struct GlobalConfig {
     LConfig::LspConfig lsp {};
     LConfig::LatexConfig latex {};
     LConfig::BibConfig bibtex {};
-
-    ~GlobalConfig () {
-        delete bibtex.style;
-    }
 };
 
 extern GlobalConfig *g_config;

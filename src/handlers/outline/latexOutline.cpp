@@ -1,185 +1,195 @@
 #include <lconfig.h>
+#include "../../filesystem/File.h"
+#include "../../filesystem/FileManager.h"
 
-#define OUTLINE_ENVIRONMENTS true
+#define STRCMP(a, b) (std::strcmp(a, b) == 0)
+#define NODE_NAME_IS(node, name) (STRCMP(ts_node_type(node), name))
 
-struct SectionPathNode {
-    DocumentSymbol *symbol;
-
-    int level;
-
-    enum class Kind {
-        Section,
-        Env
-    } kind;
-
-    SectionPathNode (DocumentSymbol *symbol, int level, Kind kind = Kind::Section) : symbol { symbol }, level { level }, kind { kind } {}
-};
-
-int getLevelForSectionCSNode (TSNode node, File &file) {
-    auto commandName = file.textForNode(node);
-
-    if (commandName == u"\\section") {
-        return 2;
-    } else if (commandName == u"\\subsection") {
-        return 3;
-    } else if (commandName == u"\\chapter") {
-        return 1;
-    } else if (commandName == u"\\part") {
-        return 0;
-    } else if (commandName == u"\\subsubsection") {
-        return 4;
-    } else if (commandName == u"\\paragraph") {
-        return 5;
-    } else if (commandName == u"\\subparagraph") {
-        return 6;
-    }
-
-    return 2; // default to section level
+std::optional<LConfig::OutlineSectionData> getLevelForCommandWord (const string &word) {
+    const auto &sectionCommands = g_config->latex.outline.sectionCommands;
+    const auto itr = sectionCommands.find(word);
+    if (itr == sectionCommands.end()) { return {}; }
+    return itr->second;
 }
 
-string getGroupNodeText (TSNode group, File &file) {
-    string nodeText {};
-    // TODO: Make better -_- (whitespace between nodes will be ignored currently)
-    // first node is $.l, the rest is arbitrary until end with $.r
-    auto numChildren = ts_node_named_child_count(group);
-    for (uint32_t i = 1; i < numChildren - 1; i++) {
-        TSNode child = ts_node_child(group, i);
-        auto type = ts_node_type(child);
-        if (strcmp(type, "comment") == 0) continue;
-        nodeText += file.utf8TextForNode(child);
-    }
-
-    return nodeText;
+// Trim functions from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+        return !std::isspace(ch);
+    }));
 }
 
-SymbolKind symbolKindForSectionLevel (int level) {
-    if (g_config->latex.extensions.headingSymbolKinds) {
-        return SymbolKind::Property; // TODO
-    } else {
-        switch (level) {
-            case 0: return SymbolKind::File;
-            case 1: return SymbolKind::Module;
-            case 2: return SymbolKind::Namespace;
-            case 3: return SymbolKind::Package;
-            case 4: return SymbolKind::Function;
-            case 5: return SymbolKind::Field;
-            default: return SymbolKind::Null;
-        }
-    }
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
 }
 
-SectionData getSectionData (TSNode sectionNode, File &file) {
-    assert(strcmp(ts_node_type(sectionNode), "section") == 0);
+static inline void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
+}
 
-    SectionData sectionData { nodeRange(sectionNode) };
+/**
+ * Gets a simplified version of the node's text.
+ *
+ * Math & environments are omitted,
+ */
+string getGroupText (TSNode node, File &file) {
+    string contents {};
 
-    auto numChildren = ts_node_named_child_count(sectionNode);
-    for (uint32_t i = 0; i < numChildren; i++) {
-        TSNode child = ts_node_named_child(sectionNode, i);
-        auto type = ts_node_type(child);
-        if (strcmp(type, "cs") == 0) {
-            sectionData.level = getLevelForSectionCSNode(child, file);
-            sectionData.kind = symbolKindForSectionLevel(sectionData.level);
-        } else if (strcmp(type, "star") == 0) {
-            sectionData.starred = true;
-        } else if (strcmp(type, "group") == 0) {
-            sectionData.name = getGroupNodeText(child, file);
+    bool ltrimNext { false };
+
+    uint32_t numGroupElem = ts_node_named_child_count(node) - 1;
+    for (uint32_t i = 1; i < numGroupElem; i++) {
+        TSNode elem = ts_node_named_child(node, i);
+        if (NODE_NAME_IS(elem, "text")) {
+            string text = file.utf8TextForNode(elem);
+            if (ltrimNext) {
+                ltrimNext = false;
+                ltrim(text);
+            }
+            contents += text;
+        } else if (NODE_NAME_IS(elem, "control_sequence")) {
+            string text = file.utf8TextForNode(elem);
+            contents += '\\' + text;
+            ltrimNext = true;
+        } else if (NODE_NAME_IS(elem, "control_word")) {
+            string text = file.utf8TextForNode(elem);
+            contents += '\\' + text;
+        } else if (NODE_NAME_IS(elem, "group")) {
+            string text = getGroupText(elem, file);
+            if (ltrimNext) {
+                ltrimNext = false;
+                ltrim(text);
+            }
+            contents += text;
         }
     }
 
-    if (sectionData.name.empty()) {
-        sectionData.name = "[unnamed section]";
-    }
-
-    return sectionData;
+    trim(contents);
+    return contents;
 }
 
-void addSectionData (vector<DocumentSymbol> &sections, vector<SectionPathNode> &treePath, SectionData &data) {
-    // need to set the range of the previous sections & add to tree path & add to sections
-    data.index = sections.size();
 
-    auto i = treePath.size();
+/*
+ * If an argument exists, it will be in a group node adjacent to the command.
+ *
+ * There may be text and comments in the way though; we check these to make sure
+ * they are (1) the star, (2) whitespace, (3) not a par
+ */
+std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool hasStar) {
+    TSNode node = commandNode;
+    while (!ts_node_is_null(node)) {
+        node = ts_node_next_named_sibling(node);
 
-    if (i == 0) { // if this is the first heading
-        auto &outline = sections.emplace_back(DocumentSymbol(data));
-        treePath.emplace_back(SectionPathNode(&outline, data.level));
-        return;
-    }
+        if (NODE_NAME_IS(node, "group")) {
+            return getGroupText(node, file);
+        }
 
-    while (true) {
-        i--;
+        if (NODE_NAME_IS(node, "text")) {
+            auto text = file.textForNode(node);
 
-        auto &pathNode = treePath[i];
-        auto level = pathNode.level;
+            auto len = text.size();
+            bool s_whitespace { true };
 
-        if (data.level > level) { // this is nested under the current path tree
-            DocumentSymbol &outlineNode = *pathNode.symbol;
-            auto &nestedOutline = outlineNode.children.emplace_back(DocumentSymbol(data));
-            treePath.emplace_back(SectionPathNode(&nestedOutline, data.level));
-            return;
-        } else if (data.level == level) { // this is at same level as previous section command
-            DocumentSymbol &outlineNode = *pathNode.symbol;
-            outlineNode.range.end = data.selectionRange.start; // set the end range of the prev section
+            for (uint i = 0; i < len; i++) {
+                auto c = text[i];
 
-            treePath.pop_back();
-            DocumentSymbol *outline;
-            outline = (i == 0)
-                ? &sections.emplace_back(DocumentSymbol(data)) // is root level if the previous was too
-                : &treePath[i - 1].symbol->children.emplace_back(DocumentSymbol(data));
-            treePath.emplace_back(SectionPathNode(outline, data.level));
-            return;
-        } else { // this is a greater section than the current one at the end of the path
-            DocumentSymbol &outlineNode = *pathNode.symbol;
-            outlineNode.range.end = data.selectionRange.start;
-            treePath.pop_back();
-
-            if (i == 0) { // if we have reached the root, this becomes a de facto main heading
-                auto &outline = sections.emplace_back(DocumentSymbol(data));
-                treePath.emplace_back(SectionPathNode(&outline, data.level));
-                return;
+                if (c == ' ' || c == '\t') {
+                    continue;
+                } else if (c == '%') {
+                    s_whitespace = false;
+                    while (i < len) {
+                        i++; if (text[i] == '\n') { break; }
+                    }
+                } else if (c == '\n') {
+                    if (!s_whitespace) {
+                        return "";
+                    }
+                    s_whitespace = false;
+                } else if (c == '*') {
+                    if (hasStar) {
+                        hasStar = false;
+                    } else {
+                        return "*";
+                    }
+                } else {
+                    return UtfHandler().utf16to8(u16string {c});
+                }
             }
         }
     }
+
+    return "";
 }
 
-void setEndpointsOfLastSymbols (vector<DocumentSymbol> &symbols, Point endPoint) {
-    if (symbols.empty()) return;
 
-    DocumentSymbol *last = &symbols.back();
-    last->range.end = endPoint;
+/*
+ * Environment node should follow a constant structure
+ * (environment
+ *   (open_env
+ *     (begin_env)
+ *     ...
+ *     (group))
+ *   ...))
+ *
+ * Comments and such should not be possible at the beginning and
+ * ends, and it should never error to an environment.
+ */
+string getEnvironmentName (TSNode envNode, File &file) {
+    assert(NODE_NAME_IS(envNode, "environment"));
+    assert(ts_node_named_child_count(envNode) > 0);
 
-    while (!last->children.empty()) {
-        last = &last->children.back();
-        last->range.end = endPoint;
-    }
+    TSNode openEnvNode = ts_node_named_child(envNode, 0);
+    assert(NODE_NAME_IS(openEnvNode, "open_env"));
+
+    TSNode nameNode = ts_node_named_child(openEnvNode, ts_node_named_child_count(openEnvNode) - 1);
+    assert(NODE_NAME_IS(nameNode, "group"));
+
+    return getGroupText(nameNode, file);
 }
 
-void gatherOutlineForNode (TSNode node, File &file, vector<DocumentSymbol> &symbols, vector<SectionPathNode> &treePath) {
-    auto numChildren = ts_node_named_child_count(node);
+void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive) {
+    uint32_t numChildren = ts_node_named_child_count(node);
     for (uint32_t i = 0; i < numChildren; i++) {
         TSNode child = ts_node_named_child(node, i);
-        auto type = ts_node_type(child);
-        if (strcmp(type, "section") == 0) {
-            SectionData sectionData = getSectionData(child, file);
-            addSectionData(symbols, treePath, sectionData);
-        } else {
-            gatherOutlineForNode(child, file, symbols, treePath);
+
+        if (NODE_NAME_IS(child, "control_word")) {
+            string wordName = file.utf8TextForNode(child);
+            auto possibleOutlineData = getLevelForCommandWord(wordName);
+            if (!possibleOutlineData) { continue; }
+
+            auto &outlineData = possibleOutlineData.value();
+
+            string name;
+
+            if (outlineData.hasArgument) {
+                auto argument = getArgumentToCommand(child, file, outlineData.hasStar);
+                if (argument) {
+                    name = argument.value();
+                } else {
+                    name = "[unnamed]";
+                }
+            }
+        }
+
+        if (recursive) {
+            generateOutline(outline, child, file, recursive);
         }
     }
 }
 
 vector<DocumentSymbol> getOutlineForLatexFile (File &file) {
-    // TODO: Environments, external files, values for custom symbols
+    assert(file.type == File::Type::Tex && file.hasParser);
 
-    vector<DocumentSymbol> symbols {};
-    vector<SectionPathNode> treePath {};
+    bool recursive = g_config->latex.outline.deepSearch;
+
+    vector<DocumentSymbol> outline {};
 
     TSNode rootNode = file.getRootNode();
-    Point endPoint = file.getEndPoint();
 
-    gatherOutlineForNode(rootNode, file, symbols, treePath);
+    generateOutline(outline, rootNode, file, recursive);
 
-    setEndpointsOfLastSymbols(symbols, endPoint);
-
-    return symbols;
+    return outline;
 }

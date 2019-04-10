@@ -18,10 +18,6 @@ void sendMessage (StringBuffer &buffer) {
 }
 
 void sendMessage (Document &message) {
-    if (!message.HasMember("jsonrpc")) {
-        message.AddMember("jsonrpc", "2.0", message.GetAllocator());
-    }
-
     StringBuffer buffer;
 
     StringWriter writer (buffer);
@@ -56,12 +52,12 @@ void sendError (Id *id, ResponseHandler::ErrorCode code, const char *message, Va
         id->writeId(writer);
 
     writer.Key("error"); writer.StartObject();
-        writer.Key("code"); writer.Int64(code);
-        writer.Key("message"); writer.String(message);
+    writer.Key("code"); writer.Int64(code);
+    writer.Key("message"); writer.String(message);
 
-        if (data != nullptr) {
-            writer.Key("data"); data->Accept(writer);
-        }
+    if (data != nullptr) {
+        writer.Key("data"); data->Accept(writer);
+    }
 
     writer.EndObject();
 
@@ -179,7 +175,6 @@ Document getMessage () {
     return json;
 }
 
-
 optional<const char *> getString (Document &message, const char *key) {
     auto itr = message.FindMember(key);
     if (itr == message.MemberEnd()) {
@@ -221,6 +216,12 @@ void launchStdinLoop () {
                 const char *textDocument = "textDocument/";
                 const size_t len = strlen(textDocument);
                 const char *method = message["method"].GetString();
+
+                if (std::strcmp(method, "exit") == 0) {
+                    std::cerr << "!!! Received exit notification !!! exiting\n";
+                    exit(0);
+                }
+
                 if (strncmp(textDocument, method, len) == 0) {
                     if (strcmp("didOpen", method + len) == 0 || strcmp("didChange", method + len) == 0) {
                         QueueManager::pushMessage(message, true);

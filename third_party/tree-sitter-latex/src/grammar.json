@@ -81,7 +81,7 @@
           },
           {
             "type": "SYMBOL",
-            "name": "text_group"
+            "name": "group"
           },
           {
             "type": "SYMBOL",
@@ -109,31 +109,6 @@
           }
         ]
       }
-    },
-    "text_group": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "begin_group"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_text_mode"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "end_group"
-        }
-      ]
     },
     "_control_sequence": {
       "type": "CHOICE",

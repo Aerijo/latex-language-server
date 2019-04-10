@@ -79,9 +79,12 @@ string getGroupText (TSNode node, File &file) {
  * they are (1) the star, (2) whitespace, (3) not a par
  */
 std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool hasStar) {
-    TSNode node = commandNode;
+    bool s_whitespace { true };
+
+    TSNode node = ts_node_next_named_sibling(commandNode);
     while (!ts_node_is_null(node)) {
-        node = ts_node_next_named_sibling(node);
+
+        std::cerr << ts_node_type(node) << "\n";
 
         if (NODE_NAME_IS(node, "group")) {
             return getGroupText(node, file);
@@ -91,21 +94,22 @@ std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool
             auto text = file.textForNode(node);
 
             auto len = text.size();
-            bool s_whitespace { true };
 
             for (uint i = 0; i < len; i++) {
                 auto c = text[i];
+                std::cerr << c << "\n";
 
                 if (c == ' ' || c == '\t') {
                     continue;
                 } else if (c == '%') {
                     s_whitespace = false;
                     while (i < len) {
-                        i++; if (text[i] == '\n') { break; }
+                        i++;
+                        if (text[i] == '\n') { break; }
                     }
                 } else if (c == '\n') {
                     if (!s_whitespace) {
-                        return "";
+                        return {};
                     }
                     s_whitespace = false;
                 } else if (c == '*') {
@@ -119,6 +123,8 @@ std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool
                 }
             }
         }
+
+        node = ts_node_next_named_sibling(node);
     }
 
     return "";
@@ -172,6 +178,10 @@ void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, 
                     name = "[unnamed]";
                 }
             }
+
+            DocumentSymbol entry { name, outlineData };
+
+            outline.emplace_back(entry);
         }
 
         if (recursive) {

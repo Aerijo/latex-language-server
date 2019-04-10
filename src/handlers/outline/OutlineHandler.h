@@ -2,6 +2,7 @@
 #define LATEX_LANGUAGE_SERVER_OUTLINEHANDLER_H
 
 #include <range.h>
+#include <lconfig.h>
 #include "../../lsp-tools/Handler.h"
 
 struct SectionData {
@@ -26,6 +27,8 @@ struct DocumentSymbol {
     DocumentSymbol (string name, SymbolKind kind, Range range, Range selectionRange) : name { name }, kind { kind }, range { range }, selectionRange { selectionRange } {};
 
     explicit DocumentSymbol (SectionData data) : name { data.name }, kind { data.kind }, range { data.selectionRange }, selectionRange { data.selectionRange } {}
+
+    DocumentSymbol (string name, LConfig::OutlineSectionData data) : name { name }, kind { data.symbol } {}
 
     string name;
 

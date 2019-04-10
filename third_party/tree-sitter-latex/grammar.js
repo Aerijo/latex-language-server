@@ -59,7 +59,7 @@ module.exports = grammar({
 
     _text_mode: $ => repeat1(choice(
       $._control_sequence,
-      $.text_group,
+      $.group,
       $.text,
       $.environment,
       $.verbatim,
@@ -67,8 +67,6 @@ module.exports = grammar({
       $.inline_math,
       $.display_math,
     )),
-
-    text_group: $ => seq($.begin_group, optional($._text_mode), $.end_group),
 
     _control_sequence: $ => choice(
       $.control_symbol,

@@ -11,16 +11,10 @@
 #include "bibOutline.cpp"
 
 void OutlineHandler::registerCapabilities (Init::ServerCapabilities &capabilities) {
-    std::cerr << "registering\n";
-
     capabilities.documentSymbolProvider = true;
 }
 
-
-
 void OutlineHandler::run (Id &id, optional<Value> &paramsOpt) {
-    std::cerr << "Getting outline...\n";
-
     if (!paramsOpt) {
         sendError(&id, ResponseHandler::ErrorCode::InvalidParams, "missing params");
         return;

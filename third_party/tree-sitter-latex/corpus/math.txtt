@@ -1,0 +1,50 @@
+=====
+Simple inline maths
+=====
+foo $ bar $ baz
+foo \( bar \) baz
+foo $ bar \) baz
+foo \( bar $ baz
+-----
+(program
+  (text) (inline_math (inline_math_start) (text) (inline_math_end))
+  (text) (inline_math (inline_math_start) (text) (inline_math_end))
+  (text) (inline_math (inline_math_start) (text) (inline_math_end))
+  (text) (inline_math (inline_math_start) (text) (inline_math_end))
+  (text)
+)
+
+=====
+Simple display maths
+=====
+foo $$ bar $$ baz
+foo \[ bar \] baz
+foo $$ bar \] baz
+foo \[ bar $$ baz
+-----
+(program
+  (text) (display_math (display_math_start) (text) (display_math_end))
+  (text) (display_math (display_math_start) (text) (display_math_end))
+  (text) (display_math (display_math_start) (text) (display_math_end))
+  (text) (display_math (display_math_start) (text) (display_math_end))
+  (text)
+)
+
+=====
+Inline math in display
+=====
+foo $$b $ ar$$ baz
+-----
+(program
+  (text) (display_math (display_math_start) (text) (math_shift_error) (text) (display_math_end)) (text)
+)
+
+=====
+"Display" math in inline
+=====
+foo $ bar $$ cat $ baz
+-----
+(program
+  (text) (inline_math (inline_math_start) (text) (inline_math_end))
+  (inline_math (inline_math_start) (text) (inline_math_end)) (text)
+)

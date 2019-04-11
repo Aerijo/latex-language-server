@@ -5,30 +5,14 @@
 #include <lconfig.h>
 #include "../../lsp-tools/Handler.h"
 
-struct SectionData {
-    int level { 0 };
-
-    size_t index { 0 }; // for building tree
-
-    bool starred { false };
-
-    SymbolKind kind { SymbolKind::Class };
-
-    string name {};
-
-    Range selectionRange {};
-
-    explicit SectionData (Range range) : selectionRange { range } {}
-};
-
 struct DocumentSymbol {
     void reflect (StringWriter &writer);
 
-    DocumentSymbol (string name, SymbolKind kind, Range range, Range selectionRange) : name { name }, kind { kind }, range { range }, selectionRange { selectionRange } {};
+    DocumentSymbol (string name, int level, SymbolKind kind, Range range, Range selectionRange) : level { level }, name { name }, kind { kind }, range { range }, selectionRange { selectionRange } {};
 
-    explicit DocumentSymbol (SectionData data) : name { data.name }, kind { data.kind }, range { data.selectionRange }, selectionRange { data.selectionRange } {}
+    DocumentSymbol (string name, Range commandRange, LConfig::OutlineSectionData data) : level { data.level }, name { name }, kind { data.symbol }, selectionRange { commandRange } {}
 
-    DocumentSymbol (string name, LConfig::OutlineSectionData data) : name { name }, kind { data.symbol } {}
+    int level;
 
     string name;
 

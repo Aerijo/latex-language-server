@@ -1,9 +1,17 @@
 #include <lconfig.h>
-#include "../../filesystem/File.h"
-#include "../../filesystem/FileManager.h"
+
+#define ENV_OUTLINE_LEVEL 500
 
 #define STRCMP(a, b) (std::strcmp(a, b) == 0)
 #define NODE_NAME_IS(node, name) (STRCMP(ts_node_type(node), name))
+
+void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive);
+
+struct OutlineCommandData {
+    string name;
+    Point endPoint;
+    bool sawStar;
+};
 
 std::optional<LConfig::OutlineSectionData> getLevelForCommandWord (const string &word) {
     const auto &sectionCommands = g_config->latex.outline.sectionCommands;
@@ -38,37 +46,40 @@ static inline void trim(std::string &s) {
 string getGroupText (TSNode node, File &file) {
     string contents {};
 
-    bool ltrimNext { false };
-
     uint32_t numGroupElem = ts_node_named_child_count(node) - 1;
     for (uint32_t i = 1; i < numGroupElem; i++) {
         TSNode elem = ts_node_named_child(node, i);
         if (NODE_NAME_IS(elem, "text")) {
             string text = file.utf8TextForNode(elem);
-            if (ltrimNext) {
-                ltrimNext = false;
-                ltrim(text);
-            }
             contents += text;
-        } else if (NODE_NAME_IS(elem, "control_sequence")) {
+        } else if (NODE_NAME_IS(elem, "control_symbol")) {
             string text = file.utf8TextForNode(elem);
             contents += '\\' + text;
-            ltrimNext = true;
         } else if (NODE_NAME_IS(elem, "control_word")) {
             string text = file.utf8TextForNode(elem);
             contents += '\\' + text;
         } else if (NODE_NAME_IS(elem, "group")) {
             string text = getGroupText(elem, file);
-            if (ltrimNext) {
-                ltrimNext = false;
-                ltrim(text);
-            }
             contents += text;
         }
     }
 
     trim(contents);
     return contents;
+}
+
+DocumentSymbol* insertOutlineEntry (vector<DocumentSymbol> &outline, DocumentSymbol &&entry) {
+    if (outline.empty()) {
+        return &outline.emplace_back(entry);
+    }
+
+    DocumentSymbol &last = outline.back();
+    if (entry.level > last.level) {
+        auto &childTree = last.children;
+        return insertOutlineEntry(childTree, std::move(entry));
+    }
+
+    return &outline.emplace_back(entry);
 }
 
 
@@ -78,26 +89,31 @@ string getGroupText (TSNode node, File &file) {
  * There may be text and comments in the way though; we check these to make sure
  * they are (1) the star, (2) whitespace, (3) not a par
  */
-std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool hasStar) {
+std::optional<OutlineCommandData> getArgumentToCommand (TSNode commandNode, File &file, bool hasStar) {
     bool s_whitespace { true };
+    bool sawStar { false };
 
     TSNode node = ts_node_next_named_sibling(commandNode);
     while (!ts_node_is_null(node)) {
 
-        std::cerr << ts_node_type(node) << "\n";
-
         if (NODE_NAME_IS(node, "group")) {
-            return getGroupText(node, file);
+            string text = getGroupText(node, file);
+
+            return OutlineCommandData {
+                text,
+                fromTSPoint(ts_node_end_point(node)),
+                sawStar
+            };
         }
 
         if (NODE_NAME_IS(node, "text")) {
+            Point point = fromTSPoint(ts_node_start_point(node));
             auto text = file.textForNode(node);
-
             auto len = text.size();
 
             for (uint i = 0; i < len; i++) {
                 auto c = text[i];
-                std::cerr << c << "\n";
+                point.column++; // points to column right of char
 
                 if (c == ' ' || c == '\t') {
                     continue;
@@ -107,19 +123,32 @@ std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool
                         i++;
                         if (text[i] == '\n') { break; }
                     }
+                    point.row++;
+                    point.column = 0;
                 } else if (c == '\n') {
                     if (!s_whitespace) {
                         return {};
                     }
+                    point.row++;
+                    point.column = 0;
                     s_whitespace = false;
                 } else if (c == '*') {
                     if (hasStar) {
+                        sawStar = true;
                         hasStar = false;
                     } else {
-                        return "*";
+                        return OutlineCommandData{
+                            "*",
+                            point,
+                            sawStar
+                        };
                     }
                 } else {
-                    return UtfHandler().utf16to8(u16string {c});
+                    return OutlineCommandData {
+                            UtfHandler().utf16to8(u16string { c }),
+                            point,
+                            sawStar
+                    };
                 }
             }
         }
@@ -127,7 +156,7 @@ std::optional<string> getArgumentToCommand (TSNode commandNode, File &file, bool
         node = ts_node_next_named_sibling(node);
     }
 
-    return "";
+    return {};
 }
 
 
@@ -156,35 +185,74 @@ string getEnvironmentName (TSNode envNode, File &file) {
     return getGroupText(nameNode, file);
 }
 
+void addControlWordOutline (vector<DocumentSymbol> &outline, TSNode child, File &file) {
+    string wordName = file.utf8TextForNode(child);
+    auto possibleOutlineData = getLevelForCommandWord(wordName);
+    if (!possibleOutlineData) { return; }
+
+    auto &outlineData = possibleOutlineData.value();
+
+    string name;
+    Range commandRange;
+    if (outlineData.hasArgument) {
+        auto posArgument = getArgumentToCommand(child, file, outlineData.hasStar);
+        if (posArgument) {
+            auto argument = posArgument.value();
+            name = argument.name;
+            commandRange = Range {fromTSPoint(ts_node_start_point(child)), argument.endPoint};
+        } else {
+            name = "[unnamed " + wordName + "]";
+            commandRange = nodeRange(child);
+        }
+    } else {
+        name = wordName;
+        commandRange = nodeRange(child);
+    }
+
+    insertOutlineEntry(outline, DocumentSymbol { name, commandRange, outlineData });
+}
+
+void addEnvOutline (vector<DocumentSymbol> &outline, TSNode child, File &file, bool recursive) {
+    string name = getEnvironmentName(child, file);
+    if (name == "document") {
+        // We still want to search the document env, even if not recursively searching
+        generateOutline(outline, child, file, recursive);
+    } else {
+        auto &envOutline = *insertOutlineEntry(outline, DocumentSymbol {
+                name,
+                ENV_OUTLINE_LEVEL, // TODO: make configurable; possibly per environment?
+                SymbolKind::Number,
+                Range {},
+                nodeRange(ts_node_named_child(child, 0))
+        });
+
+        if (recursive) {
+            auto numEnvChildren = ts_node_named_child_count(child);
+            if (numEnvChildren >= 3) {
+                for (uint32_t j = 1; j < numEnvChildren - 1; j++) {
+                    TSNode envChildNode = ts_node_named_child(child, j);
+                    if (NODE_NAME_IS(envChildNode, "env_body")) {
+                        // Contents of an environment are treated as a mini document isolated from the rest.
+                        auto &envChildren = envOutline.children;
+                        generateOutline(envChildren, child, file, recursive);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive) {
     uint32_t numChildren = ts_node_named_child_count(node);
     for (uint32_t i = 0; i < numChildren; i++) {
         TSNode child = ts_node_named_child(node, i);
 
         if (NODE_NAME_IS(child, "control_word")) {
-            string wordName = file.utf8TextForNode(child);
-            auto possibleOutlineData = getLevelForCommandWord(wordName);
-            if (!possibleOutlineData) { continue; }
-
-            auto &outlineData = possibleOutlineData.value();
-
-            string name;
-
-            if (outlineData.hasArgument) {
-                auto argument = getArgumentToCommand(child, file, outlineData.hasStar);
-                if (argument) {
-                    name = argument.value();
-                } else {
-                    name = "[unnamed]";
-                }
-            }
-
-            DocumentSymbol entry { name, outlineData };
-
-            outline.emplace_back(entry);
-        }
-
-        if (recursive) {
+            addControlWordOutline(outline, child, file);
+        } else if (NODE_NAME_IS(child, "environment")) {
+            addEnvOutline(outline, child, file, recursive);
+        } else if (recursive) {
             generateOutline(outline, child, file, recursive);
         }
     }

@@ -37,7 +37,7 @@ EntryData getEntryData (TSNode entryNode, File &file) {
 }
 
 void addEntryData (vector<DocumentSymbol> &symbols, EntryData &data) {
-    symbols.emplace_back(DocumentSymbol(data.name + ": " + data.key, data.kind, data.range, data.selectionRange));
+    symbols.emplace_back(DocumentSymbol(data.name + ": " + data.key, 0, data.kind, data.range, data.selectionRange));
 }
 
 vector<DocumentSymbol> getOutlineForBibFile (File &file) {

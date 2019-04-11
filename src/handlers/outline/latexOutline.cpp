@@ -5,7 +5,7 @@
 #define STRCMP(a, b) (std::strcmp(a, b) == 0)
 #define NODE_NAME_IS(node, name) (STRCMP(ts_node_type(node), name))
 
-void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive);
+void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive, Point endPoint);
 
 struct OutlineCommandData {
     string name;
@@ -68,18 +68,28 @@ string getGroupText (TSNode node, File &file) {
     return contents;
 }
 
+void setEndPoints (DocumentSymbol &previous, Point endPoint) {
+    if (previous.range.end < endPoint) { return; }
+
+    previous.range.end = endPoint;
+
+    if (!previous.children.empty()) {
+        setEndPoints(previous.children.back(), endPoint);
+    }
+}
+
 DocumentSymbol* insertOutlineEntry (vector<DocumentSymbol> &outline, DocumentSymbol &&entry) {
     if (outline.empty()) {
         return &outline.emplace_back(entry);
     }
 
     DocumentSymbol &last = outline.back();
-    if (entry.level > last.level) {
-        auto &childTree = last.children;
-        return insertOutlineEntry(childTree, std::move(entry));
+    if (entry.level <= last.level) {
+        setEndPoints(last, entry.range.start);
+        return &outline.emplace_back(entry);
     }
 
-    return &outline.emplace_back(entry);
+    return insertOutlineEntry(last.children, std::move(entry));
 }
 
 
@@ -185,7 +195,7 @@ string getEnvironmentName (TSNode envNode, File &file) {
     return getGroupText(nameNode, file);
 }
 
-void addControlWordOutline (vector<DocumentSymbol> &outline, TSNode child, File &file) {
+void addControlWordOutline (vector<DocumentSymbol> &outline, TSNode child, File &file, Point endPoint) {
     string wordName = file.utf8TextForNode(child);
     auto possibleOutlineData = getLevelForCommandWord(wordName);
     if (!possibleOutlineData) { return; }
@@ -209,21 +219,31 @@ void addControlWordOutline (vector<DocumentSymbol> &outline, TSNode child, File 
         commandRange = nodeRange(child);
     }
 
-    insertOutlineEntry(outline, DocumentSymbol { name, commandRange, outlineData });
+    commandRange.start.column -= 1; // `\` is not part of control sequence range
+    DocumentSymbol entry = DocumentSymbol { name, commandRange, outlineData, false };
+    entry.range = Range { commandRange.start, endPoint };
+
+    insertOutlineEntry(outline, std::move(entry));
 }
 
 void addEnvOutline (vector<DocumentSymbol> &outline, TSNode child, File &file, bool recursive) {
     string name = getEnvironmentName(child, file);
     if (name == "document") {
         // We still want to search the document env, even if not recursively searching
-        generateOutline(outline, child, file, recursive);
+        Point endPoint = fromTSPoint(ts_node_end_point(child)); // BUG: shouldn't contain end command
+        generateOutline(outline, child, file, recursive, endPoint);
     } else {
+        Range beginRange = nodeRange(ts_node_named_child(child, 0));
+        Range envRange = nodeRange(child);
+        beginRange.start.column -= 1;
+        envRange.start.column -= 1;
         auto &envOutline = *insertOutlineEntry(outline, DocumentSymbol {
                 name,
                 ENV_OUTLINE_LEVEL, // TODO: make configurable; possibly per environment?
                 SymbolKind::Number,
-                Range {},
-                nodeRange(ts_node_named_child(child, 0))
+                envRange,
+                beginRange,
+                true
         });
 
         if (recursive) {
@@ -234,7 +254,8 @@ void addEnvOutline (vector<DocumentSymbol> &outline, TSNode child, File &file, b
                     if (NODE_NAME_IS(envChildNode, "env_body")) {
                         // Contents of an environment are treated as a mini document isolated from the rest.
                         auto &envChildren = envOutline.children;
-                        generateOutline(envChildren, child, file, recursive);
+                        Point endPoint = fromTSPoint(ts_node_end_point(envChildNode));
+                        generateOutline(envChildren, child, file, recursive, endPoint);
                         break;
                     }
                 }
@@ -243,17 +264,17 @@ void addEnvOutline (vector<DocumentSymbol> &outline, TSNode child, File &file, b
     }
 }
 
-void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive) {
+void generateOutline (vector<DocumentSymbol> &outline, TSNode node, File &file, bool recursive, Point endPoint) {
     uint32_t numChildren = ts_node_named_child_count(node);
     for (uint32_t i = 0; i < numChildren; i++) {
         TSNode child = ts_node_named_child(node, i);
 
         if (NODE_NAME_IS(child, "control_word")) {
-            addControlWordOutline(outline, child, file);
+            addControlWordOutline(outline, child, file, endPoint);
         } else if (NODE_NAME_IS(child, "environment")) {
             addEnvOutline(outline, child, file, recursive);
         } else if (recursive) {
-            generateOutline(outline, child, file, recursive);
+            generateOutline(outline, child, file, recursive, endPoint);
         }
     }
 }
@@ -267,7 +288,7 @@ vector<DocumentSymbol> getOutlineForLatexFile (File &file) {
 
     TSNode rootNode = file.getRootNode();
 
-    generateOutline(outline, rootNode, file, recursive);
+    generateOutline(outline, rootNode, file, recursive, file.getEndPoint());
 
     return outline;
 }

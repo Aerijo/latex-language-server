@@ -8,9 +8,9 @@
 struct DocumentSymbol {
     void reflect (StringWriter &writer);
 
-    DocumentSymbol (string name, int level, SymbolKind kind, Range range, Range selectionRange) : level { level }, name { name }, kind { kind }, range { range }, selectionRange { selectionRange } {};
+    DocumentSymbol (string name, int level, SymbolKind kind, Range range, Range selectionRange,  bool rangeFixed=false) : level { level }, name { name }, kind { kind }, range { range }, selectionRange { selectionRange }, rangeFixed { rangeFixed } {};
 
-    DocumentSymbol (string name, Range commandRange, LConfig::OutlineSectionData data) : level { data.level }, name { name }, kind { data.symbol }, selectionRange { commandRange } {}
+    DocumentSymbol (string name, Range commandRange, LConfig::OutlineSectionData data, bool rangeFixed=false) : level { data.level }, name { name }, kind { data.symbol }, selectionRange { commandRange }, rangeFixed { rangeFixed } {}
 
     int level;
 
@@ -27,6 +27,8 @@ struct DocumentSymbol {
     Range selectionRange;
 
     vector<DocumentSymbol> children {};
+
+    bool rangeFixed { false };
 };
 
 class OutlineHandler : public RequestHandler {

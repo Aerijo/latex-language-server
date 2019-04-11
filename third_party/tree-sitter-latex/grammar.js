@@ -1,7 +1,7 @@
 /**
  * This grammar targets a broader version of LaTeX than I would use
  * for syntax highlighting. Only the bare minimum for accurate highlighting
- * is prsesent; the interpretation of a command and environment is left to
+ * is present; the interpretation of a command and environment is left to
  * the server.
  *
  * Exceptions include commands like `\verb`, which would probably break the

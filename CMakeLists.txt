@@ -89,7 +89,9 @@ add_executable(latex_language_server
         src/handlers/outline/OutlineHandler.cpp
         src/handlers/outline/OutlineHandler.h
         src/handlers/util.cpp
-        src/handlers/util.h)
+        src/handlers/util.h
+#        src/cwl/parseCWL.cpp
+        )
 
 target_include_directories(latex_language_server PRIVATE
         src)

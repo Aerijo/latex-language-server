@@ -362,6 +362,7 @@ namespace LConfig {
             enum class EnvKind {
                 General, // is generic environment / command valid anywhere
                 Math,    // is math env / math commands only show here
+                Array,   // is math env & array structure
                 NotMath, // command appears anywhere except math env
                 Tabular, // is tabular env / tabular commands appear here
                 Tabbing, // .
@@ -394,7 +395,9 @@ namespace LConfig {
             };
 
             struct CWLDef {
-                vector<EnvKind, vector<CWLSnippet>> snippets {}; // snippets sorted by valid context
+                unordered_map<EnvKind, vector<CWLSnippet>> snippets {}; // snippets sorted by valid context
+
+                // TODO: Environments sorted by valid context
 
                 unordered_map<string, EnvKind> environments {}; // environment names & their kind
 

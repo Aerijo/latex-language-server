@@ -12,7 +12,8 @@ using std::unordered_map;
 
 namespace fs = std::filesystem;
 
-typedef LConfig::LatexConfig::CWL::CWLDef CWLDef;
+typedef LConfig::LatexConfig::CWL CWL;
+typedef CWL::CWLDef CWLDef;
 
 vector<string> getFileContents (const string &path) {
     std::ifstream fileStream (path);
@@ -143,6 +144,11 @@ std::optional<std::pair<string, string>> convertToSnippet (string &line) {
                 extractArgument(snippet, line, i, placeNum, ']');
                 snippet += "]";
                 break;
+            case '(':
+                snippet += "(";
+                extractArgument(snippet, line, i, placeNum, ')');
+                snippet += ")";
+                break;
             case '%':
                 extractSpecial(snippet, line, i, placeNum);
                 break;
@@ -164,26 +170,78 @@ std::optional<std::pair<string, string>> convertToSnippet (string &line) {
     return std::pair { commandName, snippet };
 }
 
-vector<std::pair<string, string>> extractSnippets (vector<string> &commands) {
-    unordered_set<string> prefixes {};
-    vector<std::pair<string, string>> snippets {};
-    snippets.reserve(commands.size() / 2);
+void processEnvironment (string &command, string &classification, CWLDef &data) {
+    auto envNameEnd = command.find('}');
+    if (envNameEnd == string::npos) { return; }
+    string envName = command.substr(7, envNameEnd - 7); // command == \begin{name}
 
-    for (auto &command : commands) {
-        auto posSnippet = convertToSnippet(command);
-        if (posSnippet && prefixes.count(posSnippet.value().first) == 0) {
-            prefixes.insert(posSnippet.value().first);
-            snippets.emplace_back(posSnippet.value());
+    auto typeStart = classification.find('\\');
+    if (typeStart == string::npos) {
+        data.environments.insert({envName, CWL::EnvKind::General});
+    } else {
+        string type {};
+        auto i = ++typeStart;
+        for (; i < classification.size(); i++) {
+            if (!isalpha(classification[i])) { break; }
+        }
+
+        type = classification.substr(typeStart, i - typeStart);
+
+        if (type == "math") {
+            data.environments.insert({envName, CWL::EnvKind::Math});
+        } else if (type == "tabular") {
+            data.environments.insert({envName, CWL::EnvKind::Tabular});
+        } else if (type == "array") {
+            data.environments.insert({envName, CWL::EnvKind::Array});
+        } else {
+            data.environments.insert({envName, CWL::EnvKind::General});
         }
     }
-    return snippets;
+}
+
+void processSnippet (string &prefix, string &command, string &classification, CWLDef &data) {
+
+}
+
+void processCommand (string &line, CWLDef &data, bool includeOptional, bool includePlaceholders) {
+    assert(line[0] == '\\');
+
+    string command {};
+    string classification {};
+
+    auto splitPoint = line.find('#');
+
+    if (splitPoint == string::npos) {
+        command = line;
+    } else {
+        command = line.substr(0, splitPoint);
+        classification = line.substr(splitPoint + 1, line.size() - splitPoint - 1);
+    }
+
+    string prefix = command.substr(1, command.size() - 1);
+    string snippet {};
+
+    for (size_t i = 1; i < command.size(); i++) {
+        if (!isalpha(command[i])) {
+            prefix = command.substr(1, i - 1);
+            break;
+        }
+    }
+
+    if (prefix == "begin") {
+        processEnvironment(command, classification, data);
+    } else {
+        processSnippet(prefix, command, classification, data);
+    }
 }
 
 void processCommands (CWLDef &data, vector<string> &commands) {
     bool includeOptional = g_config->latex.cwl.includeOptional;
     bool includePlaceholders = g_config->latex.cwl.includePlaceholders;
 
-    unordered_set<string> prefixes {}; // so we don't add duplicates
+    for (auto &command : commands) {
+        processCommand(command, data, includeOptional, includePlaceholders);
+    }
 }
 
 CWLDef parseCWL (const string &path) {
@@ -195,16 +253,16 @@ CWLDef parseCWL (const string &path) {
 }
 
 string locateCWLDirectory () {
-    return "/home/benjamin/github/latex-language-server/third_party/LaTeX-cwl";
+    string HOME = std::getenv("HOME"); // TODO: Windows support
+    return HOME + "/.config/latex-language-server/cwl";
 }
 
 void locateAndBuildCWLFiles () {
     fs::path directory ( locateCWLDirectory() );
 
-    std::cerr << "CWD: " << fs::current_path() << "\n";
-    std::cerr << "CWL: " << directory << "\n";
-
-    if (!fs::exists(directory)) return;
+    if (!fs::exists(directory)) {
+        return;
+    }
 
     vector<string> cwlFilePaths {};
     for (auto &p : fs::directory_iterator(directory)) {
@@ -214,10 +272,10 @@ void locateAndBuildCWLFiles () {
     }
 
     for (auto &file : cwlFilePaths) {
-        auto snippets = parseCWL(file);
+        auto cwlData = parseCWL(file);
         string package = fs::path(file).filename();
         package.erase(package.size() - 4); // remove extension
-        g_config->latex.cwl.cwlFiles.insert({package, snippets});
+        g_config->latex.cwl.cwlFiles.insert({package, cwlData});
     }
 
     g_config->latex.cwl.initialised = true;

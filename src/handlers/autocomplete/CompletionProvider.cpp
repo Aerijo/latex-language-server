@@ -12,8 +12,7 @@
 #include "./PrefixTools.cpp"
 #include "../util.h"
 
-#define CWL_PATH "/home/benjamin/github/latex-language-server/src/cwl/graphicx.cwl" // TODO: Detect paths automatically
-
+typedef LConfig::LatexConfig::CWL CWL;
 
 void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabilities) {
     if (!capabilities.completionProvider) capabilities.completionProvider = Init::CompletionOptions {};
@@ -29,6 +28,20 @@ void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabil
     capabilities.completionProvider->triggerCharacters = { "\\", "@", "!", "$", "#", "&" };
 }
 
+unordered_set<string> getLoadedPackages (File &file) {
+    assert(file.type == File::Type::Tex && file.hasParser);
+//    auto rootNode = file.getRootNode();
+//     find enabled packages
+
+    unordered_set<string> packages = g_config->latex.cwl.globalEnabled;
+
+    packages.insert("biblatex");
+    packages.insert("mathtools");
+    packages.insert("geometry");
+
+    return packages;
+}
+
 void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
     // TODO: Apply edit to closing delim too
 
@@ -41,29 +54,28 @@ void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixD
 }
 
 void addShortEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    completions.addSnippet("#document", "\\\\begin{document}\n\n$0\n\n\\\\end{document}", prefix.range);
-    completions.addSnippet("#theorem", "\\\\begin{theorem}\n\t$0\n\\\\end{theorem}", prefix.range);
-    completions.addSnippet("#proof", "\\\\begin{proof}\n\t$0\n\\\\end{proof}", prefix.range);
-    completions.addSnippet("#salign", "\\\\begin{align*}\n\t$0\n\\\\end{align*}", prefix.range);
-    completions.addSnippet("#align", "\\\\begin{align}\n\t$0\n\\\\end{align}", prefix.range);
-    completions.addSnippet("#list", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
-    completions.addSnippet("#itemize", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
-    completions.addSnippet("#enumerate", "\\\\begin{enumerate}\n\t\\\\item $0\n\\\\end{enumerate}", prefix.range);
-    completions.addSnippet("#description", "\\\\begin{description}\n\t\\\\item[$1] $0\n\\\\end{description}", prefix.range);
-}
+    completions.addSnippet("document", "\\\\begin{document}\n\n$0\n\n\\\\end{document}", prefix.range);
+    completions.addSnippet("theorem", "\\\\begin{theorem}\n\t$0\n\\\\end{theorem}", prefix.range);
+    completions.addSnippet("proof", "\\\\begin{proof}\n\t$0\n\\\\end{proof}", prefix.range);
+    completions.addSnippet("salign", "\\\\begin{align*}\n\t$0\n\\\\end{align*}", prefix.range);
+    completions.addSnippet("align", "\\\\begin{align}\n\t$0\n\\\\end{align}", prefix.range);
+    completions.addSnippet("list", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
+    completions.addSnippet("itemize", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
+    completions.addSnippet("enumerate", "\\\\begin{enumerate}\n\t\\\\item $0\n\\\\end{enumerate}", prefix.range);
+    completions.addSnippet("description", "\\\\begin{description}\n\t\\\\item[$1] $0\n\\\\end{description}", prefix.range);
 
-unordered_set<string> getLoadedPackages (File &file) {
-    assert (file.type == File::Type::Tex && file.hasParser);
-//    auto rootNode = file.getRootNode();
-//     do stuff
+    auto loadedPackages = getLoadedPackages(file);
+    auto cwlEntries = *getCWLFiles();
 
-    unordered_set<string> packages {};
+    for (auto &entry : cwlEntries) {
+        if (loadedPackages.count(entry.first) == 0) { continue; }
 
-    packages.insert("biblatex");
-    packages.insert("mathtools");
-    packages.insert("geometry");
+//        auto context = CWL::EnvKind::General;
 
-    return packages;
+        for (auto &env : entry.second.environments) {
+            completions.addShortEnv(env.first, prefix.range);
+        }
+    }
 }
 
 void addCommandCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
@@ -82,22 +94,24 @@ void addCommandCompletions (CompletionList &completions, File &file, PrefixData 
 //    completions.addCommand("\\item", prefix.range);
 
     auto loadedPackages = getLoadedPackages(file);
-
     auto cwlEntries = *getCWLFiles();
+
     for (auto &entry : cwlEntries) {
         if (loadedPackages.count(entry.first) == 0) { continue; }
 
-        for (auto &pair : entry.second) {
-            completions.addSnippet(std::move(pair.first), std::move(pair.second), prefix.range);
+        auto context = CWL::EnvKind::General;
+
+        auto itr = entry.second.snippets.find(context);
+        if (itr != entry.second.snippets.end()) {
+            for (auto &snippet : itr->second) {
+                completions.addSnippet(snippet.prefix, snippet.snippet, prefix.range);
+            }
         }
     }
-
-//    Range range = Range { prefix.range.start.traverse({0, 2}), prefix.range.end.traverse({0, 3}) };
-//    completions.addCommand("\\foobar", range);
 }
 
 void addMathShiftCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    completions.addSnippet("$", "\\\\($1\\\\)$0", prefix.range, "b");
+    completions.addSnippet("$", R"(\\($1\\)$0)", prefix.range, "b");
     completions.addSnippet("$$", "\\\\[\n\t$0\n\\\\]", prefix.range, prefix.value.length() > 1 ? "a" : "c"); // TODO: Don't use hack
 }
 
@@ -220,6 +234,17 @@ void CompletionList::addSnippet (string &&prefix, string &&body, Range &range, s
     items.emplace_back(snippet);
 }
 
+void CompletionList::addSnippet (string &prefix, string &body, Range &range, string &&sortText) {
+    CompletionItem snippet {};
+    snippet.label = prefix;
+
+    snippet.textEdit.newText = body;
+    snippet.textEdit.range = range;
+    snippet.sortText = sortText;
+
+    items.emplace_back(snippet);
+}
+
 void CompletionList::addCommand (string prefix, Range &range) {
     CompletionItem snippet {};
     snippet.label = prefix;
@@ -242,6 +267,12 @@ void CompletionList::addEnvironment (string &prefix, string &envName, Range &ran
 
 bool CompletionList::empty () {
     return items.empty();
+}
+
+void CompletionList::addShortEnv (const string &name, Range &range) {
+    string prefix = name;
+    string snippet = "\\\\begin{" + name + "}\n\t$0\n\\\\end{" + name + "}";
+    addSnippet(prefix, snippet, range);
 }
 
 void CompletionItem::reflect (StringWriter &writer) {

@@ -13,6 +13,7 @@
 \scalebox{h-scale}{text}
 \scalebox{h-scale}[v-scale]{text}
 \setkeys{Gin}{key val}
+\foo{ba%<rd%>}{cat}
 #keyvals:\includegraphics
 width=##L
 height=##L

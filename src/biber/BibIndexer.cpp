@@ -143,15 +143,10 @@ void locateAndBuildBiberStyle (File *file) {
 
     fs::path filePath ( file->getPath() );
 
-    std::cerr << filePath << "\n";
-
     auto directory = filePath.parent_path();
-
-    std::cerr << "Dir is " << directory << "\n";
 
     if (!fs::exists(directory)) return;
 
-    std::cerr << "Searching dir " << directory << " for style\n";
     string controlFilePath {};
     for (auto &p : fs::directory_iterator(directory)) {
         if (p.path().extension() == ".bcf") {

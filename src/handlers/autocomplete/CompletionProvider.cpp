@@ -7,8 +7,12 @@
 #include "lsp-tools/definitions.h"
 #include "lsp-tools/messaging.h"
 
+#include "../../cwl/parseCWL.cpp"
+
 #include "./PrefixTools.cpp"
 #include "../util.h"
+
+#define CWL_PATH "/home/benjamin/github/latex-language-server/src/cwl/graphicx.cwl" // TODO: Detect paths automatically
 
 
 void CompletionProvider::registerCapabilities (Init::ServerCapabilities &capabilities) {
@@ -48,23 +52,48 @@ void addShortEnvironmentCompletions (CompletionList &completions, File &file, Pr
     completions.addSnippet("#description", "\\\\begin{description}\n\t\\\\item[$1] $0\n\\\\end{description}", prefix.range);
 }
 
+unordered_set<string> getLoadedPackages (File &file) {
+    assert (file.type == File::Type::Tex && file.hasParser);
+//    auto rootNode = file.getRootNode();
+//     do stuff
+
+    unordered_set<string> packages {};
+
+    packages.insert("biblatex");
+    packages.insert("mathtools");
+    packages.insert("geometry");
+
+    return packages;
+}
+
 void addCommandCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
     completions.addSnippet("\\begin", "\\\\begin{$1}\n\t$0\n\\\\end{$1}", prefix.range);
-    completions.addSnippet("\\section", "\\\\section{$1}\n$0", prefix.range);
-    completions.addSnippet("\\subsection", "\\\\subsection{$1}\n$0", prefix.range);
-    completions.addSnippet("\\subsubsection", "\\\\subsubsection{$1}\n$0", prefix.range);
-    completions.addSnippet("\\paragraph", "\\\\paragraph{$1}\n$0", prefix.range);
-    completions.addSnippet("\\subparagraph", "\\\\subparagraph{$1}\n$0", prefix.range);
-    completions.addSnippet("\\chapter", "\\\\chapter{$1}\n$0", prefix.range);
-    completions.addSnippet("\\part", "\\\\part{$1}\n$0", prefix.range);
-    completions.addSnippet("\\documentclass", "\\\\documentclass[$2]{$1}$0", prefix.range);
-    completions.addSnippet("\\usepackage", "\\\\usepackage{$1}$0", prefix.range);
-    completions.addCommand("\\phi", prefix.range);
-    completions.addCommand("\\emptyset", prefix.range);
-    completions.addCommand("\\item", prefix.range);
+//    completions.addSnippet("\\section", "\\\\section{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\subsection", "\\\\subsection{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\subsubsection", "\\\\subsubsection{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\paragraph", "\\\\paragraph{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\subparagraph", "\\\\subparagraph{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\chapter", "\\\\chapter{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\part", "\\\\part{$1}\n$0", prefix.range);
+//    completions.addSnippet("\\documentclass", "\\\\documentclass[$2]{$1}$0", prefix.range);
+//    completions.addSnippet("\\usepackage", "\\\\usepackage{$1}$0", prefix.range);
+//    completions.addCommand("\\phi", prefix.range);
+//    completions.addCommand("\\emptyset", prefix.range);
+//    completions.addCommand("\\item", prefix.range);
 
-    Range range = Range { prefix.range.start.traverse({0, 2}), prefix.range.end.traverse({0, 3}) };
-    completions.addCommand("\\foobar", range);
+    auto loadedPackages = getLoadedPackages(file);
+
+    auto cwlEntries = *getCWLFiles();
+    for (auto &entry : cwlEntries) {
+        if (loadedPackages.count(entry.first) == 0) { continue; }
+
+        for (auto &pair : entry.second) {
+            completions.addSnippet(std::move(pair.first), std::move(pair.second), prefix.range);
+        }
+    }
+
+//    Range range = Range { prefix.range.start.traverse({0, 2}), prefix.range.end.traverse({0, 3}) };
+//    completions.addCommand("\\foobar", range);
 }
 
 void addMathShiftCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
@@ -111,7 +140,6 @@ CompletionList getLatexCompletionsForFileAndPoint (File &file, Point cursorPosit
             addShortEnvironmentCompletions(completions, file, prefix);
             break;
         case PrefixType::Magic:
-            exit(1);
             addMagicCommentCompletions(completions, file, prefix);
             break;
         case PrefixType::MathShift:
@@ -196,7 +224,7 @@ void CompletionList::addCommand (string prefix, Range &range) {
     CompletionItem snippet {};
     snippet.label = prefix;
 
-    snippet.textEdit.newText = prefix;
+    snippet.textEdit.newText = "\\" + prefix;
     snippet.textEdit.range = range;
 
     items.emplace_back(snippet);

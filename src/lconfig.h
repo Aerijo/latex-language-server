@@ -350,6 +350,11 @@ namespace LConfig {
                     {"subparagraph", {5, OutlineSymbol::Subparagraph}},
             };
         } outline;
+
+        struct CWL {
+            bool initialised { false };
+            unordered_map<string, vector<std::pair<string, string>>> snippets;
+        } cwl;
     };
 
     struct BibConfig {

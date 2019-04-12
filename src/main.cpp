@@ -14,8 +14,6 @@
 
 #include "text-buffer.h"
 
-#include "./cwl/parseCWL.cpp"
-
 using std::u16string;
 
 GlobalConfig *g_config;
@@ -27,12 +25,6 @@ int main (int argc, char** argv, const char** env) {
 
     FileManager::init();
     QueueManager::init();
-
-
-
-    parseCWL("/home/benjamin/github/latex-language-server/src/cwl/graphicx.cwl");
-
-    
 
     auto messageHandler = new MessageHandler();
 

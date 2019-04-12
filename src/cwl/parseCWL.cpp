@@ -2,10 +2,15 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <lconfig.h>
 
 using std::string;
 using std::vector;
 using std::unordered_map;
+
+namespace fs = std::filesystem;
 
 vector<string> getFileContents (const string &path) {
     std::ifstream fileStream (path);
@@ -40,49 +45,109 @@ vector<string> extractCommands (vector<string> &lines) {
     return commands;
 }
 
-void extractArgument (string &snippet, string &line, size_t &i, int &placeNum) {
-    auto start = i + 1;
+bool extractSpecialPlaceholder (string &snippet, string &line, size_t &i, int &placeNum) {
+    i++;
+    auto start = i;
     for (; i < line.size(); i++) {
-        if (line[i] == '}') { break; }
+        if (line[i] == '%') {
+            if (i < line.size() - 1 && line[i + 1] == '>') {
+                string placeholder = line.substr(start, i - start);
+                snippet += "${" + std::to_string(++placeNum) + ":" + placeholder + "}";
+                i++;
+                return true;
+            }
+        }
     }
-    string argument = line.substr(start, i - start);
-    snippet += "{${" + std::to_string(++placeNum) + ":" + argument + "}}";
+
+    return false;
 }
 
-void extractOptionalArgument (string &snippet, string &line, size_t &i, int &placeNum) {
-    auto start = i + 1;
-    for (; i < line.size(); i++) {
-        if (line[i] == ']') { break; }
+void extractSpecial (string &snippet, string &line, size_t &i, int &placeNum) {
+    i++;
+    if (i == line.size()) { return; }
+    switch (line[i]) {
+        case '\\':
+            snippet += '\n';
+            break;
+        case '|':
+            snippet += "$" + std::to_string(++placeNum);
+            break;
+        case '<':
+            extractSpecialPlaceholder(snippet, line, i, placeNum);
+            break;
+        default:
+            break;
     }
-    string argument = line.substr(start, i - start);
-    snippet += "[${" + std::to_string(++placeNum) + ":" + argument + "}]";
 }
 
-string convertToSnippet (string &line) {
+void extractArgument (string &snippet, string &line, size_t &i, int &placeNum, char end) {
+    i++;
+    auto start = i;
+    string argument;
+    bool foundArgument { false };
+
+    for (; i < line.size(); i++) {
+        if (line[i] == end) { break; }
+        if (line[i] == '%') {
+            bool isSpecial { false };
+            argument = line.substr(start, i - start);
+
+            if (i < line.size() - 1 && line[i + 1] == '<') {
+                i++;
+                isSpecial = extractSpecialPlaceholder(argument, line, i, placeNum);
+            }
+
+            if (!isSpecial) {
+                snippet += "${" + std::to_string(++placeNum) + ":" + argument + "}";
+            } else {
+                snippet += argument;
+            }
+
+            foundArgument = true;
+        }
+    }
+
+    if (!foundArgument) {
+        argument = line.substr(start, i - start);
+        snippet += "${" + std::to_string(++placeNum) + ":" + argument + "}";
+    }
+}
+
+std::optional<std::pair<string, string>> convertToSnippet (string &line) {
     size_t i = 1;
     for (; i < line.size(); i++) {
         if (!isalpha(line[i])) { break; }
     }
 
-    string commandName = "\\" + line.substr(0, i);
+    string commandName = line.substr(0, i);
 
-    string snippet = "\\\\" + commandName;
+    if (commandName == "\\begin") { return {}; } // TODO: extract environments
+
+    string snippet = "\\" + commandName;
 
     int placeNum = 0;
 
-    for (; i < line.size(); i++) {
+    bool cont { true };
+
+    for (; i < line.size() && cont; i++) {
         switch (line[i]) {
             case '{':
-                extractArgument(snippet, line, i, placeNum);
+                snippet += "{";
+                extractArgument(snippet, line, i, placeNum, '}');
+                snippet += "}";
                 break;
             case '[':
-                extractOptionalArgument(snippet, line, i, placeNum);
+                snippet += "[";
+                extractArgument(snippet, line, i, placeNum, ']');
+                snippet += "]";
                 break;
             case '%':
-                // cursor placement
+                extractSpecial(snippet, line, i, placeNum);
                 break;
             case '#':
                 // end of definition (metadata follows)
+                if (i < line.size() - 1 && line[i + 1] == 'S') { return {}; }
+                cont = false;
                 break;
             case '\\':
                 snippet += R"|(\\\\)|";
@@ -92,24 +157,66 @@ string convertToSnippet (string &line) {
         }
     }
 
+    snippet += "$0";
 
-    return snippet;
+    return std::pair { commandName, snippet };
 }
 
-vector<string> extractSnippets (vector<string> &commands) {
-    vector<string> snippets (commands.size());
-    for (size_t i = 0; i < commands.size(); i++) {
-        snippets[i] = convertToSnippet(commands[i]);
+vector<std::pair<string, string>> extractSnippets (vector<string> &commands) {
+    unordered_set<string> prefixes {};
+    vector<std::pair<string, string>> snippets {};
+    snippets.reserve(commands.size() / 2);
+
+    for (auto &command : commands) {
+        auto posSnippet = convertToSnippet(command);
+        if (posSnippet && prefixes.count(posSnippet.value().first) == 0) {
+            prefixes.insert(posSnippet.value().first);
+            snippets.emplace_back(posSnippet.value());
+        }
     }
     return snippets;
 }
 
-void parseCWL (const string &path) {
+vector<std::pair<string, string>> parseCWL (const string &path) {
     auto lines = getFileContents(path);
     auto commands = extractCommands(lines);
     auto snippets = extractSnippets(commands);
+    return snippets;
+}
 
-    for (auto &line : snippets) {
-        std::cout << line << "\n";
+string locateCWLDirectory () {
+    return "/home/benjamin/github/latex-language-server/third_party/LaTeX-cwl";
+}
+
+void locateAndBuildCWLFiles () {
+    fs::path directory ( locateCWLDirectory() );
+
+    std::cerr << "CWD: " << fs::current_path() << "\n";
+    std::cerr << "CWL: " << directory << "\n";
+
+    if (!fs::exists(directory)) return;
+
+    vector<string> cwlFilePaths {};
+    for (auto &p : fs::directory_iterator(directory)) {
+        if (p.path().extension() == ".cwl") {
+            cwlFilePaths.emplace_back(p.path());
+        }
     }
+
+    for (auto &file : cwlFilePaths) {
+        auto snippets = parseCWL(file);
+        string package = fs::path(file).filename();
+        package.erase(package.size() - 4); // remove extension
+        g_config->latex.cwl.snippets.insert({package, snippets});
+    }
+
+    g_config->latex.cwl.initialised = true;
+}
+
+unordered_map<string, vector<std::pair<string, string>>> *getCWLFiles () {
+    if (!g_config->latex.cwl.initialised) {
+        locateAndBuildCWLFiles();
+    }
+
+    return &g_config->latex.cwl.snippets;
 }

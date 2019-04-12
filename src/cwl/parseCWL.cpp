@@ -12,6 +12,8 @@ using std::unordered_map;
 
 namespace fs = std::filesystem;
 
+typedef LConfig::LatexConfig::CWL::CWLDef CWLDef;
+
 vector<string> getFileContents (const string &path) {
     std::ifstream fileStream (path);
     vector<string> lines;
@@ -177,11 +179,19 @@ vector<std::pair<string, string>> extractSnippets (vector<string> &commands) {
     return snippets;
 }
 
-vector<std::pair<string, string>> parseCWL (const string &path) {
+void processCommands (CWLDef &data, vector<string> &commands) {
+    bool includeOptional = g_config->latex.cwl.includeOptional;
+    bool includePlaceholders = g_config->latex.cwl.includePlaceholders;
+
+    unordered_set<string> prefixes {}; // so we don't add duplicates
+}
+
+CWLDef parseCWL (const string &path) {
+    CWLDef data {};
     auto lines = getFileContents(path);
     auto commands = extractCommands(lines);
-    auto snippets = extractSnippets(commands);
-    return snippets;
+    processCommands(data, commands);
+    return data;
 }
 
 string locateCWLDirectory () {
@@ -207,16 +217,16 @@ void locateAndBuildCWLFiles () {
         auto snippets = parseCWL(file);
         string package = fs::path(file).filename();
         package.erase(package.size() - 4); // remove extension
-        g_config->latex.cwl.snippets.insert({package, snippets});
+        g_config->latex.cwl.cwlFiles.insert({package, snippets});
     }
 
     g_config->latex.cwl.initialised = true;
 }
 
-unordered_map<string, vector<std::pair<string, string>>> *getCWLFiles () {
+unordered_map<string, CWLDef> *getCWLFiles () {
     if (!g_config->latex.cwl.initialised) {
         locateAndBuildCWLFiles();
     }
 
-    return &g_config->latex.cwl.snippets;
+    return &g_config->latex.cwl.cwlFiles;
 }

@@ -233,6 +233,8 @@ void addEnvOutline (vector<DocumentSymbol> &outline, TSNode child, File &file, b
         Point endPoint = fromTSPoint(ts_node_end_point(child)); // BUG: shouldn't contain end command
         generateOutline(outline, child, file, recursive, endPoint);
     } else {
+        if (!g_config->latex.outline.includeEnvironments) { return; }
+
         Range beginRange = nodeRange(ts_node_named_child(child, 0));
         Range envRange = nodeRange(child);
         beginRange.start.column -= 1;

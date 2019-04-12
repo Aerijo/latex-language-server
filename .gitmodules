@@ -6,4 +6,4 @@
 	url = https://github.com/Aerijo/tree-sitter-biber.git
 [submodule "third_party/LaTeX-cwl"]
 	path = third_party/LaTeX-cwl
-	url = https://github.com/LaTeXing/LaTeX-cwl
+	url = https://github.com/Aerijo/LaTeX-cwl

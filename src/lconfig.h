@@ -10,7 +10,6 @@
 
 #include "lsp-tools/definitions.h"
 
-//using std::optional;
 using std::string;
 using std::vector;
 
@@ -56,7 +55,6 @@ namespace LConfig {
         Subparagraph = static_cast<int>(SymbolKind::Null),
     };
     }
-
 
 // TODO
     enum ResourceOperationKind {
@@ -336,7 +334,7 @@ namespace LConfig {
         struct Outline {
             bool extendedSymbolKinds { false }; // if special symbols for outline view are supported by client
 
-            bool includeEnvironments { true }; // add environment names to tree
+            bool includeEnvironments { true }; // add environment names and contents to tree
 
             bool deepSearch { true }; // search recursively through groups and environments, instead of just top level
 
@@ -349,11 +347,63 @@ namespace LConfig {
                     {"paragraph", {4, OutlineSymbol::Paragraph}},
                     {"subparagraph", {5, OutlineSymbol::Subparagraph}},
             };
+
         } outline;
 
         struct CWL {
             bool initialised { false };
-            unordered_map<string, vector<std::pair<string, string>>> snippets;
+
+            bool includePlaceholders { true };
+
+            bool includeOptional { true };
+
+            bool prioritisedSuggestions { true }; // hides suggestions marked by #*
+
+            enum class EnvKind {
+                General, // is generic environment / command valid anywhere
+                Math,    // is math env / math commands only show here
+                NotMath, // command appears anywhere except math env
+                Tabular, // is tabular env / tabular commands appear here
+                Tabbing, // .
+                Verbatim, // .
+                Theorem, // .
+            };
+
+            enum class CommandKind {
+                Generic,
+                Usepackage, // u
+                Reference, // r
+                Citation, // c; & C for complex citation (TODO)
+                Label, // l
+                Definition, // d
+                Includegraphics, // g
+                Includefile, // i
+                Bibliography, // b
+                Url, // U
+                Bracketlike, // K; e.g., \big{
+                Todo, // D
+                Color, // B
+            };
+
+            struct CWLSnippet {
+                string prefix;
+
+                string snippet;
+
+                EnvKind context;
+            };
+
+            struct CWLDef {
+                vector<EnvKind, vector<CWLSnippet>> snippets {}; // snippets sorted by valid context
+
+                unordered_map<string, EnvKind> environments {}; // environment names & their kind
+
+                unordered_map<string, CommandKind> commands {}; // map command name to kind
+            };
+
+            unordered_map<string, CWLDef> cwlFiles {};
+
+            unordered_set<string> globalEnabled {"latex-document"};
         } cwl;
     };
 

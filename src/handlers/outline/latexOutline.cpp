@@ -121,7 +121,7 @@ std::optional<OutlineCommandData> getArgumentToCommand (TSNode commandNode, File
             auto text = file.textForNode(node);
             auto len = text.size();
 
-            for (uint i = 0; i < len; i++) {
+            for (unsigned int i = 0; i < len; i++) {
                 auto c = text[i];
                 point.column++; // points to column right of char
 

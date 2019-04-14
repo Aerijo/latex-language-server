@@ -3,7 +3,7 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -liconv -Wall")
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
 add_compile_definitions(HAVE_CONFIG_H)

@@ -4,9 +4,6 @@ set -e
 
 printf "Running latex-language-server build script...\n\n"
 
-export CC=gcc
-export CXX=g++
-
 if [[ ! ${PWD##*/} == "latex-language-server" ]]; then
     printf "Must run from project root; exiting\n\n"
     exit

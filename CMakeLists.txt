@@ -3,18 +3,9 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall")
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message("Running clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -liconv")
-else()
-    message("Not running clang ${CMAKE_CXX_COMPILER_ID}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -d")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -liconv -Wall")
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
-
 add_compile_definitions(HAVE_CONFIG_H)
 add_compile_definitions(PCRE2_CODE_UNIT_WIDTH=16)
 add_compile_definitions(SUPPORT_JIT)
@@ -116,6 +107,4 @@ target_include_directories(latex_language_server PRIVATE
         third_party/superstring/vendor/libcxx
         third_party/superstring/vendor/pcre2-10.32/src)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_link_libraries(${PROJECT_NAME} stdc++fs)
-endif()
+target_link_libraries(${PROJECT_NAME} stdc++fs)

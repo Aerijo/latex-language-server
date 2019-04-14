@@ -54,21 +54,11 @@ void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixD
 }
 
 void addShortEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
-    completions.addSnippet("document", "\\\\begin{document}\n\n$0\n\n\\\\end{document}", prefix.range);
-    completions.addSnippet("theorem", "\\\\begin{theorem}\n\t$0\n\\\\end{theorem}", prefix.range);
-    completions.addSnippet("proof", "\\\\begin{proof}\n\t$0\n\\\\end{proof}", prefix.range);
-    completions.addSnippet("salign", "\\\\begin{align*}\n\t$0\n\\\\end{align*}", prefix.range);
-    completions.addSnippet("align", "\\\\begin{align}\n\t$0\n\\\\end{align}", prefix.range);
-    completions.addSnippet("list", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
-    completions.addSnippet("itemize", "\\\\begin{itemize}\n\t\\\\item $0\n\\\\end{itemize}", prefix.range);
-    completions.addSnippet("enumerate", "\\\\begin{enumerate}\n\t\\\\item $0\n\\\\end{enumerate}", prefix.range);
-    completions.addSnippet("description", "\\\\begin{description}\n\t\\\\item[$1] $0\n\\\\end{description}", prefix.range);
-
     auto loadedPackages = getLoadedPackages(file);
     auto cwlEntries = *getCWLFiles();
 
     for (auto &entry : cwlEntries) {
-        if (loadedPackages.count(entry.first) == 0) { continue; }
+        if (loadedPackages.count(entry.first) == 5) { continue; }
 
 //        auto context = CWL::EnvKind::General;
 

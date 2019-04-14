@@ -3,14 +3,14 @@
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <lconfig.h>
 
 using std::string;
 using std::vector;
 using std::unordered_map;
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 typedef LConfig::LatexConfig::CWL CWL;
 typedef CWL::CWLDef CWLDef;
@@ -48,126 +48,11 @@ vector<string> extractCommands (vector<string> &lines) {
     return commands;
 }
 
-bool extractSpecialPlaceholder (string &snippet, string &line, size_t &i, int &placeNum) {
-    i++;
-    auto start = i;
-    for (; i < line.size(); i++) {
-        if (line[i] == '%') {
-            if (i < line.size() - 1 && line[i + 1] == '>') {
-                string placeholder = line.substr(start, i - start);
-                snippet += "${" + std::to_string(++placeNum) + ":" + placeholder + "}";
-                i++;
-                return true;
-            }
-        }
+void skipUntil (string &command, size_t &i, char end) {
+    i = command.find(end, i);
+    if (i == string::npos) {
+        i = command.size();
     }
-
-    return false;
-}
-
-void extractSpecial (string &snippet, string &line, size_t &i, int &placeNum) {
-    i++;
-    if (i == line.size()) { return; }
-    switch (line[i]) {
-        case '\\':
-            snippet += '\n';
-            break;
-        case '|':
-            snippet += "$" + std::to_string(++placeNum);
-            break;
-        case '<':
-            extractSpecialPlaceholder(snippet, line, i, placeNum);
-            break;
-        default:
-            break;
-    }
-}
-
-void extractArgument (string &snippet, string &line, size_t &i, int &placeNum, char end) {
-    i++;
-    auto start = i;
-    string argument;
-    bool foundArgument { false };
-
-    for (; i < line.size(); i++) {
-        if (line[i] == end) { break; }
-        if (line[i] == '%') {
-            bool isSpecial { false };
-            argument = line.substr(start, i - start);
-
-            if (i < line.size() - 1 && line[i + 1] == '<') {
-                i++;
-                isSpecial = extractSpecialPlaceholder(argument, line, i, placeNum);
-            }
-
-            if (!isSpecial) {
-                snippet += "${" + std::to_string(++placeNum) + ":" + argument + "}";
-            } else {
-                snippet += argument;
-            }
-
-            foundArgument = true;
-        }
-    }
-
-    if (!foundArgument) {
-        argument = line.substr(start, i - start);
-        snippet += "${" + std::to_string(++placeNum) + ":" + argument + "}";
-    }
-}
-
-std::optional<std::pair<string, string>> convertToSnippet (string &line) {
-    size_t i = 1;
-    for (; i < line.size(); i++) {
-        if (!isalpha(line[i])) { break; }
-    }
-
-    string commandName = line.substr(0, i);
-
-    if (commandName == "\\begin") { return {}; } // TODO: extract environments
-
-    string snippet = "\\" + commandName;
-
-    int placeNum = 0;
-
-    bool cont { true };
-
-    for (; i < line.size() && cont; i++) {
-        switch (line[i]) {
-            case '{':
-                snippet += "{";
-                extractArgument(snippet, line, i, placeNum, '}');
-                snippet += "}";
-                break;
-            case '[':
-                snippet += "[";
-                extractArgument(snippet, line, i, placeNum, ']');
-                snippet += "]";
-                break;
-            case '(':
-                snippet += "(";
-                extractArgument(snippet, line, i, placeNum, ')');
-                snippet += ")";
-                break;
-            case '%':
-                extractSpecial(snippet, line, i, placeNum);
-                break;
-            case '#':
-                // end of definition (metadata follows)
-                if (i < line.size() - 1 && line[i + 1] == 'S') { return {}; }
-                cont = false;
-                break;
-            case '\\':
-                snippet += R"|(\\\\)|";
-                break;
-            default:
-                snippet += line[i];
-        }
-    }
-
-    snippet += "$0";
-
-    return std::pair { commandName, snippet };
 }
 
 void processEnvironment (string &command, string &classification, CWLDef &data) {
@@ -199,8 +84,73 @@ void processEnvironment (string &command, string &classification, CWLDef &data) 
     }
 }
 
-void processSnippet (string &prefix, string &command, string &classification, CWLDef &data) {
+void extractArgument (string &snippet, string &command, size_t &i, char end, int &place, bool includePlacholders) {
+    auto start = i;
+    skipUntil(command, i, end);
 
+    if (!includePlacholders) {
+        snippet += "$" + std::to_string(++place);
+        return;
+    }
+
+    string arg = command.substr(start, i - start);
+
+    auto special = arg.find('%');
+    if (special == string::npos || special == i - 1) {
+        snippet += "${" + std::to_string(++place) + ":" + arg + "}";
+        return;
+    }
+
+    snippet += "${" + std::to_string(++place) + ":" + command.substr(special, i - special) + "}";
+}
+
+string extractSnippet (string &command, bool includeOptional, bool includePlaceholders) {
+    // TODO: Proper % special support
+
+    string snippet {};
+    string arg;
+    int placeNum = 0;
+    for (size_t i = 0; i < command.size(); i++) {
+        auto c = command[i];
+        switch (c) {
+            case '{':
+                snippet += '{';
+                extractArgument(snippet, command, ++i, '}', placeNum, includePlaceholders);
+                snippet += '}';
+                break;
+            case '(':
+                snippet += '(';
+                extractArgument(snippet, command, ++i, ')', placeNum, includePlaceholders);
+                snippet += ')';
+                break;
+            case '[':
+                if (includeOptional) {
+                    snippet += '[';
+                    extractArgument(snippet, command, ++i, ']', placeNum, includePlaceholders);
+                    snippet += ']';
+                } else {
+                    skipUntil(command, i, ']');
+                }
+                break;
+            case '\\':
+                snippet += "\\\\";
+                break;
+            default:
+                snippet += c;
+        }
+    }
+
+    snippet += "$0";
+
+    return snippet;
+}
+
+void processSnippet (string &prefix, string &command, string &classification, CWLDef &data, bool includeOptional, bool includePlaceholders) {
+    string snippet = extractSnippet(command, includeOptional, includePlaceholders);
+
+    data.snippets[CWL::EnvKind::General].emplace_back(CWL::CWLSnippet {
+        prefix, snippet, CWL::EnvKind::General
+    });
 }
 
 void processCommand (string &line, CWLDef &data, bool includeOptional, bool includePlaceholders) {
@@ -222,7 +172,7 @@ void processCommand (string &line, CWLDef &data, bool includeOptional, bool incl
     string snippet {};
 
     for (size_t i = 1; i < command.size(); i++) {
-        if (!isalpha(command[i])) {
+        if (!isalpha(command[i]) && command[i] != '*') {
             prefix = command.substr(1, i - 1);
             break;
         }
@@ -231,7 +181,7 @@ void processCommand (string &line, CWLDef &data, bool includeOptional, bool incl
     if (prefix == "begin") {
         processEnvironment(command, classification, data);
     } else {
-        processSnippet(prefix, command, classification, data);
+        processSnippet(prefix, command, classification, data, includeOptional, includePlaceholders);
     }
 }
 

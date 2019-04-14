@@ -3,14 +3,14 @@
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <lconfig.h>
 
 using std::string;
 using std::vector;
 using std::unordered_map;
 
-namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 
 typedef LConfig::LatexConfig::CWL CWL;
 typedef CWL::CWLDef CWLDef;

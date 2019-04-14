@@ -3,7 +3,14 @@ project(latex_language_server LANGUAGES C CXX VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -liconv -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall")
+
+# Hack to use -liconv on macOS GCC, but not Linux for some reason.
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    message("adding liconv")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -liconv")
+    message(${CMAKE_CXX_FLAGS})
+endif()
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
 add_compile_definitions(HAVE_CONFIG_H)

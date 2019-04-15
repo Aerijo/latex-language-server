@@ -188,7 +188,7 @@ void extractStructureLevel (Classification &result, string &c, size_t &i) {
     auto start = i;
     if (c[i] == '-') { i++; }
     for (; i < c.size(); i++) {
-        if (!isnumber(c[i])) { i--; break; } // i will be incremented after
+        if (!isdigit(c[i])) { i--; break; } // i will be incremented after
     }
 
     string level = c.substr(start, i - start);

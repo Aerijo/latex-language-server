@@ -44,13 +44,6 @@ unordered_set<string> getLoadedPackages (File &file) {
 
 void addEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
     // TODO: Apply edit to closing delim too
-
-    completions.addSnippet("document", "document", prefix.range);
-    completions.addSnippet("align", "align", prefix.range);
-    completions.addSnippet("salign", "align*", prefix.range);
-    completions.addSnippet("theorem", "theorem", prefix.range);
-    completions.addSnippet("proof", "proof", prefix.range);
-    completions.addSnippet("figure", "figure", prefix.range);
 }
 
 void addShortEnvironmentCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
@@ -58,10 +51,6 @@ void addShortEnvironmentCompletions (CompletionList &completions, File &file, Pr
     auto cwlEntries = *getCWLFiles();
 
     for (auto &entry : cwlEntries) {
-        if (loadedPackages.count(entry.first) == 5) { continue; }
-
-//        auto context = CWL::EnvKind::General;
-
         for (auto &env : entry.second.environments) {
             completions.addShortEnv(env.first, prefix.range);
         }
@@ -70,24 +59,12 @@ void addShortEnvironmentCompletions (CompletionList &completions, File &file, Pr
 
 void addCommandCompletions (CompletionList &completions, File &file, PrefixData &prefix) {
     completions.addSnippet("\\begin", "\\\\begin{$1}\n\t$0\n\\\\end{$1}", prefix.range);
-//    completions.addSnippet("\\section", "\\\\section{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\subsection", "\\\\subsection{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\subsubsection", "\\\\subsubsection{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\paragraph", "\\\\paragraph{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\subparagraph", "\\\\subparagraph{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\chapter", "\\\\chapter{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\part", "\\\\part{$1}\n$0", prefix.range);
-//    completions.addSnippet("\\documentclass", "\\\\documentclass[$2]{$1}$0", prefix.range);
-//    completions.addSnippet("\\usepackage", "\\\\usepackage{$1}$0", prefix.range);
-//    completions.addCommand("\\phi", prefix.range);
-//    completions.addCommand("\\emptyset", prefix.range);
-//    completions.addCommand("\\item", prefix.range);
 
     auto loadedPackages = getLoadedPackages(file);
     auto cwlEntries = *getCWLFiles();
 
     for (auto &entry : cwlEntries) {
-        if (loadedPackages.count(entry.first) == 0) { continue; }
+        if (loadedPackages.count(entry.first) == 5) { continue; }
 
         auto context = CWL::EnvKind::General;
 

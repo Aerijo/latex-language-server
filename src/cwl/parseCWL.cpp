@@ -145,7 +145,129 @@ string extractSnippet (string &command, bool includeOptional, bool includePlaceh
     return snippet;
 }
 
-void processSnippet (string &prefix, string &command, string &classification, CWLDef &data, bool includeOptional, bool includePlaceholders) {
+enum class ClassKind {
+    None,
+    Math,
+    Tabular,
+    Tabbing,
+    Text,
+};
+
+enum class DefKind {
+    None,
+    Reference,
+    Citation,
+    Label,
+    Definition,
+    Graphics,
+    File,
+    Package,
+    Bibliography,
+    Url,
+    Bracketlike,
+    Todo,
+    Color,
+    Special,
+    Verbatim,
+    Newtheorem,
+    Structure,
+};
+
+struct Classification {
+    bool extended { false }; // *
+    bool visible { true }; // S
+
+    ClassKind classKind { ClassKind::None };
+    DefKind defKind { DefKind::None };
+    int sectionLevel { 0 };
+    vector<string> validEnvs {};
+    string behavesLike {};
+};
+
+void extractStructureLevel (Classification &result, string &c, size_t &i) {
+    auto start = i;
+    if (c[i] == '-') { i++; }
+    for (; i < c.size(); i++) {
+        if (!isnumber(c[i])) { i--; break; } // i will be incremented after
+    }
+
+    string level = c.substr(start, i - start);
+    if (level.empty()) { return; }
+
+    result.sectionLevel = std::stoi(level) - 1;
+}
+
+void extractValidEnvs (Classification &result, string &c, size_t &i) {
+    auto start = i;
+    string envName;
+    for (; i < c.size(); i++) {
+        if (c[i] != ',') { continue; }
+        envName = c.substr(start, i - start);
+        if (!envName.empty()) { result.validEnvs.push_back(envName); }
+        start = i + 1;
+    }
+    envName = c.substr(start, i - start);
+    if (!envName.empty()) { result.validEnvs.push_back(envName); }
+}
+
+void extractLikeEnv (Classification &result, string &c, size_t &i) {
+    result.behavesLike = c.substr(i, c.size() - i);
+    i = c.size();
+}
+
+Classification identifyClassfification (string &classification) {
+    Classification result {};
+
+    for (size_t i = 0; i < classification.size(); i++) {
+        auto c = classification[i];
+        switch (c) {
+            case '*': result.extended = true; break;
+            case 'S': result.visible = false; break;
+            case 'M': break; // TODO
+            case 'm': result.classKind = ClassKind::Math; break;
+            case 't': result.classKind = ClassKind::Tabular; break;
+            case 'T': result.classKind = ClassKind::Tabbing; break;
+            case 'n': result.classKind = ClassKind::Text; break;
+            case 'r': result.defKind = DefKind::Reference; break;
+            case 'c': result.defKind = DefKind::Citation; break;
+            case 'C': result.defKind = DefKind::Citation; break; // TODO
+            case 'l': result.defKind = DefKind::Label; break;
+            case 'd': result.defKind = DefKind::Definition; break;
+            case 'g': result.defKind = DefKind::Graphics; break;
+            case 'i': result.defKind = DefKind::File; break;
+            case 'u': result.defKind = DefKind::Package; break;
+            case 'b': result.defKind = DefKind::Bibliography; break;
+            case 'U': result.defKind = DefKind::Url; break;
+            case 'K': result.defKind = DefKind::Bracketlike; break;
+            case 'D': result.defKind = DefKind::Todo; break;
+            case 'B': result.defKind = DefKind::Color; break;
+            case 's': result.defKind = DefKind::Special; break;
+            case 'V': result.defKind = DefKind::Verbatim; break;
+            case 'N': result.defKind = DefKind::Newtheorem; break;
+            case 'L':
+                result.defKind = DefKind::Structure;
+                extractStructureLevel(result, classification, ++i);
+                break;
+            case '/':
+                extractValidEnvs(result, classification, ++i);
+                break;
+            case '\\':
+                extractLikeEnv(result, classification, ++i);
+                break;
+            default: {
+                return result; // skip unknown
+            }
+        }
+    }
+
+    return result;
+}
+
+void processSnippet (string &prefix, string &command, string &meta, CWLDef &data, bool includeOptional, bool includePlaceholders) {
+    Classification classification = identifyClassfification(meta);
+
+    if (!classification.visible) { return; }
+
     string snippet = extractSnippet(command, includeOptional, includePlaceholders);
 
     data.snippets[CWL::EnvKind::General].emplace_back(CWL::CWLSnippet {

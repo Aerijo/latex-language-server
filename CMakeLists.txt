@@ -9,7 +9,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message("adding liconv")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -liconv")
-    message(${CMAKE_CXX_FLAGS})
 endif()
 
 add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
@@ -96,7 +95,6 @@ add_executable(latex_language_server
         src/handlers/outline/OutlineHandler.h
         src/handlers/util.cpp
         src/handlers/util.h
-#        src/cwl/parseCWL.cpp
         )
 
 target_include_directories(latex_language_server PRIVATE
